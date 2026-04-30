@@ -1,9 +1,10 @@
-﻿using AiIncidentResponseAgent.Domain.Events;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
+using AiIncidentResponseAgent.Domain.Events;
 
 namespace AiIncidentResponseAgent.Application.Abstractions.Repositories
 {
@@ -16,5 +17,9 @@ namespace AiIncidentResponseAgent.Application.Abstractions.Repositories
             CancellationToken cancellationToken = default);
 
         Task AddAsync(AgentEvent agentEvent, CancellationToken cancellationToken = default);
+
+        Task<IReadOnlyList<AgentEvent>> GetLatestAsync(
+    int take,
+    CancellationToken cancellationToken = default);
     }
 }

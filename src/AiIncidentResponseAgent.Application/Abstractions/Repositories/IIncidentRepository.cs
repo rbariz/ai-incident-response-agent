@@ -7,5 +7,9 @@ namespace AiIncidentResponseAgent.Application.Abstractions.Repositories
         Task<Incident?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
         Task AddAsync(Incident incident, CancellationToken cancellationToken = default);
+
+        Task<IReadOnlyList<Incident>> GetLatestAsync(
+    int take,
+    CancellationToken cancellationToken = default);
     }
 }

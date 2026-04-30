@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AiIncidentResponseAgent.Application\AiIncidentResponseAgent.Application.csproj" />
+    <ProjectReference Include="..\AiIncidentResponseAgent.Contracts\AiIncidentResponseAgent.Contracts.csproj" />
     <ProjectReference Include="..\AiIncidentResponseAgent.Infrastructure\AiIncidentResponseAgent.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

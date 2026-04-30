@@ -9,5 +9,9 @@ namespace AiIncidentResponseAgent.Application.Abstractions.Repositories
             CancellationToken cancellationToken = default);
 
         Task AddAsync(AgentExecution execution, CancellationToken cancellationToken = default);
+
+        Task<IReadOnlyList<AgentExecution>> GetLatestAsync(
+    int take,
+    CancellationToken cancellationToken = default);
     }
 }
