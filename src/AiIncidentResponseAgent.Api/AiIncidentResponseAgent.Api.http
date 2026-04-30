@@ -1,0 +1,6 @@
+@AiIncidentResponseAgent.Api_HostAddress = http://localhost:5027
+
+GET {{AiIncidentResponseAgent.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

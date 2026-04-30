@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-AiIncidentResponseAgent.Worker-a7b9e1cd-d2bb-4d2a-955e-4662731033f6</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AiIncidentResponseAgent.Application\AiIncidentResponseAgent.Application.csproj" />
+    <ProjectReference Include="..\AiIncidentResponseAgent.Infrastructure\AiIncidentResponseAgent.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

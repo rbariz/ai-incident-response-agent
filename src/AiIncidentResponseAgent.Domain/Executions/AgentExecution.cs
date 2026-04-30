@@ -1,0 +1,90 @@
+﻿using AiIncidentResponseAgent.Domain.Common;
+
+namespace AiIncidentResponseAgent.Domain.Executions
+{
+    public sealed class AgentExecution : Entity
+    {
+        private AgentExecution() { }
+
+        public AgentExecution(
+            Guid agentEventId,
+            string idempotencyKey,
+            string correlationId)
+        {
+            AgentEventId = agentEventId;
+            IdempotencyKey = idempotencyKey;
+            CorrelationId = correlationId;
+            Status = AgentExecutionStatus.Pending;
+        }
+
+        public Guid AgentEventId { get; private set; }
+        public Guid? IncidentId { get; private set; }
+
+        public string IdempotencyKey { get; private set; } = string.Empty;
+        public string CorrelationId { get; private set; } = string.Empty;
+
+        public AgentExecutionStatus Status { get; private set; }
+        public AgentDecision Decision { get; private set; }
+        public AgentAction Action { get; private set; }
+
+        public string AnalysisSummary { get; private set; } = string.Empty;
+        public decimal ConfidenceScore { get; private set; }
+
+        public string ResultJson { get; private set; } = "{}";
+        public string ErrorMessage { get; private set; } = string.Empty;
+
+        public int RetryCount { get; private set; }
+
+        public DateTime? StartedAtUtc { get; private set; }
+        public DateTime? CompletedAtUtc { get; private set; }
+
+        public void AttachIncident(Guid incidentId)
+        {
+            IncidentId = incidentId;
+        }
+
+        public void Start()
+        {
+            Status = AgentExecutionStatus.Running;
+            StartedAtUtc = DateTime.UtcNow;
+        }
+
+        public void SetDecision(
+            AgentDecision decision,
+            AgentAction action,
+            string analysisSummary,
+            decimal confidenceScore)
+        {
+            Decision = decision;
+            Action = action;
+            AnalysisSummary = analysisSummary;
+            ConfidenceScore = confidenceScore;
+        }
+
+        public void MarkSucceeded(string resultJson)
+        {
+            Status = AgentExecutionStatus.Succeeded;
+            ResultJson = resultJson;
+            CompletedAtUtc = DateTime.UtcNow;
+        }
+
+        public void MarkFailed(string errorMessage)
+        {
+            Status = AgentExecutionStatus.Failed;
+            ErrorMessage = errorMessage;
+            CompletedAtUtc = DateTime.UtcNow;
+        }
+
+        public void MarkSkipped(string reason)
+        {
+            Status = AgentExecutionStatus.Skipped;
+            ErrorMessage = reason;
+            CompletedAtUtc = DateTime.UtcNow;
+        }
+
+        public void IncrementRetry()
+        {
+            RetryCount++;
+        }
+    }
+}
