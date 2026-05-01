@@ -50,7 +50,8 @@ public sealed class AgentEventsController : ControllerBase
                 MapType(request.Type),
                 request.Source.Trim(),
                 request.PayloadJson,
-                correlationId);
+                correlationId,
+                request.Lang);
 
         await _events.AddAsync(agentEvent, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -87,7 +88,7 @@ public sealed class AgentEventsController : ControllerBase
 
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<AgentEventResponse>>> GetLatest(
-        [FromQuery] int take = 50,
+        [FromQuery] int take = 200,
         CancellationToken cancellationToken = default)
     {
         take = Math.Clamp(take, 1, 200);
@@ -110,7 +111,8 @@ public sealed class AgentEventsController : ControllerBase
             CorrelationId = agentEvent.CorrelationId,
             Processed = agentEvent.Processed,
             CreatedAtUtc = agentEvent.CreatedAtUtc,
-            ProcessedAtUtc = agentEvent.ProcessedAtUtc
+            ProcessedAtUtc = agentEvent.ProcessedAtUtc,
+            Lang = agentEvent.Lang
         };
     }
 

@@ -10,7 +10,7 @@ using AiIncidentResponseAgent.Domain.Events;
 
 namespace AiIncidentResponseAgent.Infrastructure.Ai;
 
-public sealed class StubAgentAnalyzer : IAgentAnalyzer
+public sealed partial class StubAgentAnalyzer : IAgentAnalyzer
 {
     public Task<AgentAnalysisResult> AnalyzeAsync(
         AgentContext context,
@@ -90,7 +90,8 @@ public sealed class StubAgentAnalyzer : IAgentAnalyzer
                   "intent": "Unknown",
                   "suggestedAction": "ObserveOnly"
                 }
-                """
+                """,
+                Provider = "stub"
             }
         };
 

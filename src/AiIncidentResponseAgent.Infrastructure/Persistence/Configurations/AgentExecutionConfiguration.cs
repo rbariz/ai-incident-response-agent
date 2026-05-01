@@ -48,10 +48,35 @@ public sealed class AgentExecutionConfiguration : IEntityTypeConfiguration<Agent
             .HasColumnName("error_message")
             .HasMaxLength(4000);
 
+
+
         builder.Property(x => x.RetryCount).HasColumnName("retry_count").IsRequired();
         builder.Property(x => x.StartedAtUtc).HasColumnName("started_at_utc");
         builder.Property(x => x.CompletedAtUtc).HasColumnName("completed_at_utc");
         builder.Property(x => x.CreatedAtUtc).HasColumnName("created_at_utc").IsRequired();
+
+
+
+        builder.Property(x => x.AnalysisProvider)
+    .HasColumnName("analysis_provider")
+    .HasMaxLength(50)
+    .IsRequired();
+
+        builder.Property(x => x.AnalysisLanguage)
+    .HasColumnName("analysis_language")
+    .HasMaxLength(2)
+    .IsRequired();
+
+
+        builder.Property(x => x.AnalysisSummaryFr)
+            .HasColumnName("analysis_summary_fr")
+            .HasMaxLength(4000)
+            .IsRequired();
+
+        builder.Property(x => x.AnalysisSummaryEn)
+            .HasColumnName("analysis_summary_en")
+            .HasMaxLength(4000)
+            .IsRequired();
 
         builder.HasIndex(x => x.IdempotencyKey).IsUnique();
         builder.HasIndex(x => x.AgentEventId);

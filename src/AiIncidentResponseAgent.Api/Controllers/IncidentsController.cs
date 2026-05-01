@@ -1,4 +1,6 @@
 ﻿using AiIncidentResponseAgent.Application.Abstractions.Repositories;
+using AiIncidentResponseAgent.Contracts.Ops;
+using AiIncidentResponseAgent.Domain.Incidents;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,24 +18,30 @@ public sealed class IncidentsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetLatest(
-        [FromQuery] int take = 50,
+    public async Task<ActionResult<IReadOnlyList<IncidentResponse>>> GetLatest(
+        [FromQuery] string? status,
+        [FromQuery] int take = 200,
         CancellationToken cancellationToken = default)
     {
         take = Math.Clamp(take, 1, 200);
 
-        var incidents = await _incidents.GetLatestAsync(take, cancellationToken);
+        var incidents = await _incidents.GetLatestByStatusAsync(
+            status,
+            take,
+            cancellationToken);
 
-        return Ok(incidents.Select(x => new
-        {
-            x.Id,
-            x.AgentEventId,
-            x.Title,
-            x.Description,
-            x.Severity,
-            x.Status,
-            x.CreatedAtUtc,
-            x.ResolvedAtUtc
-        }));
+        return Ok(incidents.Select(ToResponse).ToList());
     }
+
+    private static IncidentResponse ToResponse(Incident x) => new()
+    {
+        Id = x.Id,
+        AgentEventId = x.AgentEventId,
+        Title = x.Title,
+        Description = x.Description,
+        Severity = x.Severity.ToString(),
+        Status = x.Status.ToString(),
+        CreatedAtUtc = x.CreatedAtUtc,
+        ResolvedAtUtc = x.ResolvedAtUtc
+    };
 }

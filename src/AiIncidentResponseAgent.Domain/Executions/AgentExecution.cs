@@ -38,6 +38,13 @@ namespace AiIncidentResponseAgent.Domain.Executions
         public DateTime? StartedAtUtc { get; private set; }
         public DateTime? CompletedAtUtc { get; private set; }
 
+        public string AnalysisProvider { get; private set; } = string.Empty;
+
+        public string AnalysisLanguage { get; private set; } = "en";
+
+        public string AnalysisSummaryFr { get; private set; } = string.Empty;
+        public string AnalysisSummaryEn { get; private set; } = string.Empty;
+
         public void AttachIncident(Guid incidentId)
         {
             IncidentId = incidentId;
@@ -50,15 +57,23 @@ namespace AiIncidentResponseAgent.Domain.Executions
         }
 
         public void SetDecision(
-            AgentDecision decision,
-            AgentAction action,
-            string analysisSummary,
-            decimal confidenceScore)
+    AgentDecision decision,
+    AgentAction action,
+    string analysisSummary,
+    decimal confidenceScore,
+    string analysisProvider,
+    string analysisLanguage,
+    string analysisSummaryFr,
+    string analysisSummaryEn)
         {
             Decision = decision;
             Action = action;
             AnalysisSummary = analysisSummary;
             ConfidenceScore = confidenceScore;
+            AnalysisProvider = analysisProvider;
+            AnalysisLanguage = NormalizeLang(analysisLanguage);
+            AnalysisSummaryFr = analysisSummaryFr;
+            AnalysisSummaryEn = analysisSummaryEn;
         }
 
         public void MarkSucceeded(string resultJson)
@@ -85,6 +100,13 @@ namespace AiIncidentResponseAgent.Domain.Executions
         public void IncrementRetry()
         {
             RetryCount++;
+        }
+
+        private static string NormalizeLang(string? lang)
+        {
+            return string.Equals(lang, "fr", StringComparison.OrdinalIgnoreCase)
+                ? "fr"
+                : "en";
         }
     }
 }

@@ -20,6 +20,8 @@
         public DateTime CreatedAtUtc { get; set; }
 
         public DateTime? ProcessedAtUtc { get; set; }
+
+        public string Lang { get; set; } = "en";
     }
 
 

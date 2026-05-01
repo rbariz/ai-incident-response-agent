@@ -16,6 +16,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
+using static AiIncidentResponseAgent.Infrastructure.Ai.StubAgentAnalyzer;
+
 namespace AiIncidentResponseAgent.Infrastructure;
 
 public static class DependencyInjection
@@ -36,8 +38,36 @@ public static class DependencyInjection
         services.AddScoped<IIncidentRepository, IncidentRepository>();
         services.AddScoped<IAgentMemoryRepository, AgentMemoryRepository>();
         services.AddScoped<IAgentActionLockRepository, AgentActionLockRepository>();
+        /*
+        services.Configure<OpenAiAnalyzerOptions>(
+    configuration.GetSection("OpenAiAnalyzer"));
 
-        services.AddScoped<IAgentAnalyzer, StubAgentAnalyzer>();
+        services.AddScoped<StubAgentAnalyzer>();
+        services.AddScoped<IAgentAnalyzer, OpenAiAgentAnalyzer>();*/
+
+
+        services.Configure<OllamaAnalyzerOptions>(
+    configuration.GetSection("OllamaAnalyzer"));
+
+        services.AddScoped<StubAgentAnalyzer>();
+
+        services.AddHttpClient<IAgentAnalyzer, OllamaAgentAnalyzer>((sp, client) =>
+        {
+            var options = sp.GetRequiredService<
+                Microsoft.Extensions.Options.IOptions<OllamaAnalyzerOptions>>().Value;
+
+            client.BaseAddress = new Uri(options.BaseUrl);
+        });
+
+        services.AddHttpClient<ITextTranslator, OllamaTextTranslator>((sp, client) =>
+        {
+            var options = sp.GetRequiredService<
+                Microsoft.Extensions.Options.IOptions<OllamaAnalyzerOptions>>().Value;
+
+            client.BaseAddress = new Uri(options.BaseUrl);
+        });
+
+
         services.AddScoped<IAgentActionExecutor, AgentActionExecutor>();
 
         services.AddScoped<IAgentActionHandler, BlockTicketActionHandler>();

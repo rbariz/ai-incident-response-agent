@@ -13,5 +13,10 @@ namespace AiIncidentResponseAgent.Application.Abstractions.Repositories
         Task<IReadOnlyList<AgentExecution>> GetLatestAsync(
     int take,
     CancellationToken cancellationToken = default);
+
+        Task<IReadOnlyList<AgentExecution>> GetLatestByCorrelationAsync(
+    string? correlationId,
+    int take,
+    CancellationToken cancellationToken = default);
     }
 }

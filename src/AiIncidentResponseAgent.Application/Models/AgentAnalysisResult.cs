@@ -11,6 +11,8 @@
         public string SuggestedAction { get; init; } = string.Empty;
 
         public string RawResponseJson { get; init; } = "{}";
+
+        public string Provider { get; init; } = "unknown";
     }
 
 

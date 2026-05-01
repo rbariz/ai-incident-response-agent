@@ -80,6 +80,12 @@ namespace AiIncidentResponseAgent.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at_utc");
 
+                    b.Property<string>("Lang")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("lang");
+
                     b.Property<string>("PayloadJson")
                         .IsRequired()
                         .HasColumnType("jsonb")
@@ -129,11 +135,35 @@ namespace AiIncidentResponseAgent.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("agent_event_id");
 
+                    b.Property<string>("AnalysisLanguage")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("analysis_language");
+
+                    b.Property<string>("AnalysisProvider")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("analysis_provider");
+
                     b.Property<string>("AnalysisSummary")
                         .IsRequired()
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)")
                         .HasColumnName("analysis_summary");
+
+                    b.Property<string>("AnalysisSummaryEn")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("analysis_summary_en");
+
+                    b.Property<string>("AnalysisSummaryFr")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("analysis_summary_fr");
 
                     b.Property<DateTime?>("CompletedAtUtc")
                         .HasColumnType("timestamp with time zone")

@@ -16,6 +16,8 @@ namespace AiIncidentResponseAgent.Application.Models
         public string MemoryJson { get; init; } = "{}";
 
         public string RiskContextJson { get; init; } = "{}";
+
+        public string Lang { get; init; } = "en";
     }
 
 

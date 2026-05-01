@@ -482,3 +482,9 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Node / frontend
+ops-center/node_modules/
+ops-center/dist/
+ops-center/.env
+ops-center/.vite/

@@ -11,5 +11,10 @@ namespace AiIncidentResponseAgent.Application.Abstractions.Repositories
         Task<IReadOnlyList<Incident>> GetLatestAsync(
     int take,
     CancellationToken cancellationToken = default);
+
+        Task<IReadOnlyList<Incident>> GetLatestByStatusAsync(
+    string? status,
+    int take,
+    CancellationToken cancellationToken = default);
     }
 }

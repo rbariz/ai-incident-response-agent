@@ -33,4 +33,22 @@ public sealed class IncidentRepository : IIncidentRepository
             .Take(take)
             .ToListAsync(cancellationToken);
     }
+    public async Task<IReadOnlyList<Incident>> GetLatestByStatusAsync(
+    string? status,
+    int take,
+    CancellationToken cancellationToken = default)
+    {
+        var query = _db.Incidents.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(status) &&
+            Enum.TryParse<IncidentStatus>(status, true, out var parsedStatus))
+        {
+            query = query.Where(x => x.Status == parsedStatus);
+        }
+
+        return await query
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+    }
 }

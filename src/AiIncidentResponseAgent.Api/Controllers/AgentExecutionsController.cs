@@ -1,4 +1,6 @@
 ﻿using AiIncidentResponseAgent.Application.Abstractions.Repositories;
+using AiIncidentResponseAgent.Contracts.Ops;
+using AiIncidentResponseAgent.Domain.Executions;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,32 +18,41 @@ public sealed class AgentExecutionsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetLatest(
-        [FromQuery] int take = 50,
+    public async Task<ActionResult<IReadOnlyList<AgentExecutionResponse>>> GetLatest(
+        [FromQuery] string? correlationId,
+        [FromQuery] int take = 200,
         CancellationToken cancellationToken = default)
     {
         take = Math.Clamp(take, 1, 200);
 
-        var executions = await _executions.GetLatestAsync(take, cancellationToken);
+        var executions = await _executions.GetLatestByCorrelationAsync(
+            correlationId,
+            take,
+            cancellationToken);
 
-        return Ok(executions.Select(x => new
-        {
-            x.Id,
-            x.AgentEventId,
-            x.IncidentId,
-            x.IdempotencyKey,
-            x.CorrelationId,
-            x.Status,
-            x.Decision,
-            x.Action,
-            x.AnalysisSummary,
-            x.ConfidenceScore,
-            x.ResultJson,
-            x.ErrorMessage,
-            x.RetryCount,
-            x.CreatedAtUtc,
-            x.StartedAtUtc,
-            x.CompletedAtUtc
-        }));
+        return Ok(executions.Select(ToResponse).ToList());
     }
+
+    private static AgentExecutionResponse ToResponse(AgentExecution x) => new()
+    {
+        Id = x.Id,
+        AgentEventId = x.AgentEventId,
+        IncidentId = x.IncidentId,
+        CorrelationId = x.CorrelationId,
+        Status = x.Status.ToString(),
+        Decision = x.Decision.ToString(),
+        Action = x.Action.ToString(),
+        AnalysisProvider = x.AnalysisProvider,
+        AnalysisSummary = x.AnalysisSummary,
+        ConfidenceScore = x.ConfidenceScore,
+        ResultJson = x.ResultJson,
+        ErrorMessage = x.ErrorMessage,
+        RetryCount = x.RetryCount,
+        CreatedAtUtc = x.CreatedAtUtc,
+        StartedAtUtc = x.StartedAtUtc,
+        CompletedAtUtc = x.CompletedAtUtc,
+        AnalysisLanguage = x.AnalysisLanguage,
+        AnalysisSummaryFr = x.AnalysisSummaryFr,
+        AnalysisSummaryEn = x.AnalysisSummaryEn,
+    };
 }

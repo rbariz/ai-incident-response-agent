@@ -37,6 +37,11 @@ public sealed class AgentEventConfiguration : IEntityTypeConfiguration<AgentEven
         builder.Property(x => x.ProcessedAtUtc).HasColumnName("processed_at_utc");
         builder.Property(x => x.CreatedAtUtc).HasColumnName("created_at_utc").IsRequired();
 
+        builder.Property(x => x.Lang)
+                .HasColumnName("lang")
+                .HasMaxLength(2)
+                .IsRequired();  
+
         builder.HasIndex(x => x.Processed);
         builder.HasIndex(x => x.CorrelationId);
         builder.HasIndex(x => x.CreatedAtUtc);

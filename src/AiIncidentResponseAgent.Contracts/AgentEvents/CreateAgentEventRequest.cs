@@ -15,6 +15,8 @@ namespace AiIncidentResponseAgent.Contracts.AgentEvents
         public string PayloadJson { get; set; } = "{}";
 
         public string? CorrelationId { get; set; }
+
+        public string Lang { get; set; } = "en";
     }
 
 

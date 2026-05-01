@@ -26,6 +26,7 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
     private readonly IAgentMemoryService _memoryService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IAgentActionLockRepository _actionLocks;
+    private readonly ITextTranslator _translator;
 
     public AgentOrchestrator(
         IAgentEventRepository events,
@@ -38,7 +39,8 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
         IAgentFeedbackHandler feedbackHandler,
         IAgentMemoryService memoryService,
         IUnitOfWork unitOfWork,
-        IAgentActionLockRepository actionLocks)
+        IAgentActionLockRepository actionLocks,
+        ITextTranslator translator)
     {
         _events = events;
         _executions = executions;
@@ -51,6 +53,7 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
         _memoryService = memoryService;
         _unitOfWork = unitOfWork;
         _actionLocks = actionLocks;
+        _translator = translator;
     }
 
     public async Task ProcessEventAsync(Guid eventId, CancellationToken cancellationToken = default)
@@ -87,7 +90,8 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
         {
             var initialContext = new AgentContext
             {
-                Event = agentEvent
+                Event = agentEvent,
+                Lang = agentEvent.Lang
             };
 
             var memoryJson = await _memoryService.LoadMemoryAsync(
@@ -97,10 +101,29 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
             var context = new AgentContext
             {
                 Event = agentEvent,
-                MemoryJson = memoryJson
+                MemoryJson = memoryJson,
+                Lang = agentEvent.Lang
             };
 
             var analysis = await _analyzer.AnalyzeAsync(context, cancellationToken);
+
+            var analysisLang = context.Lang;
+
+            var analysisSummaryFr = analysisLang == "fr"
+                ? analysis.Summary
+                : await _translator.TranslateAsync(
+                    analysis.Summary,
+                    analysisLang,
+                    "fr",
+                    cancellationToken);
+
+            var analysisSummaryEn = analysisLang == "en"
+                ? analysis.Summary
+                : await _translator.TranslateAsync(
+                    analysis.Summary,
+                    analysisLang,
+                    "en",
+                    cancellationToken);
 
             var decision = await _decisionEngine.DecideAsync(
                 context,
@@ -111,7 +134,11 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
                 decision.Decision,
                 decision.Action,
                 analysis.Summary,
-                analysis.ConfidenceScore);
+                analysis.ConfidenceScore,
+                 analysis.Provider,
+                 analysisLang,
+                analysisSummaryFr,
+                analysisSummaryEn);
 
             Incident? incident = null;
 

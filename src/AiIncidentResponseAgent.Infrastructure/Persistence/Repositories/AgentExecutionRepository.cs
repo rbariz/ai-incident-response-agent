@@ -36,4 +36,22 @@ public sealed class AgentExecutionRepository : IAgentExecutionRepository
             .Take(take)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<AgentExecution>> GetLatestByCorrelationAsync(
+    string? correlationId,
+    int take,
+    CancellationToken cancellationToken = default)
+    {
+        var query = _db.AgentExecutions.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(correlationId))
+        {
+            query = query.Where(x => x.CorrelationId == correlationId);
+        }
+
+        return await query
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+    }
 }
