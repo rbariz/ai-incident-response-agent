@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 using AiIncidentResponseAgent.Application.Abstractions;
 using AiIncidentResponseAgent.Domain.Actions;
+using AiIncidentResponseAgent.Domain.Audit;
 using AiIncidentResponseAgent.Domain.Auth;
 using AiIncidentResponseAgent.Domain.Events;
 using AiIncidentResponseAgent.Domain.Executions;
@@ -34,6 +35,8 @@ namespace AiIncidentResponseAgent.Infrastructure.Persistence
         public DbSet<Ticket> Tickets => Set<Ticket>();
 
         public DbSet<AuthUser> AuthUsers => Set<AuthUser>();
+
+        public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

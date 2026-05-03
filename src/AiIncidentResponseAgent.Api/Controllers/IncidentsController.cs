@@ -17,12 +17,14 @@ public sealed class IncidentsController : ControllerBase
     private readonly IIncidentRepository _incidents;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IRealtimeNotifier _realtime;
+    private readonly IAuditService _audit;
 
-    public IncidentsController(IIncidentRepository incidents, IUnitOfWork unitOfWork, IRealtimeNotifier realtime)
+    public IncidentsController(IIncidentRepository incidents, IUnitOfWork unitOfWork, IRealtimeNotifier realtime, IAuditService audit)
     {
         _incidents = incidents;
         _unitOfWork = unitOfWork;
         _realtime = realtime;
+        _audit = audit;
     }
 
 
@@ -86,6 +88,22 @@ public sealed class IncidentsController : ControllerBase
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+        await _audit.WriteAsync(
+    "User",
+    User.Identity?.Name ?? "unknown",
+    "IncidentUpdated",
+    "Incident",
+    incident.Id.ToString(),
+    incident.AgentEventId.ToString(),
+    $$"""
+    {
+      "title": "{{incident.Title}}",
+      "severity": "{{incident.Severity}}",
+      "status": "{{incident.Status}}"
+    }
+    """,
+    cancellationToken);
+
         await _realtime.IncidentChangedAsync(
             incident.Id,
             incident.AgentEventId,
@@ -118,6 +136,21 @@ public sealed class IncidentsController : ControllerBase
             incident.Severity.ToString(),
             cancellationToken);
 
+        await _audit.WriteAsync(
+    "User",
+    User.Identity?.Name ?? "unknown",
+    "IncidentResolved",
+    "Incident",
+    incident.Id.ToString(),
+    incident.AgentEventId.ToString(),
+    $$"""
+    {
+      "status": "{{incident.Status}}",
+      "resolvedAtUtc": "{{incident.ResolvedAtUtc}}"
+    }
+    """,
+    cancellationToken);
+
         return Ok(ToResponse(incident));
     }
 
@@ -143,6 +176,19 @@ public sealed class IncidentsController : ControllerBase
             incident.Status.ToString(),
             incident.Severity.ToString(),
             cancellationToken);
+        await _audit.WriteAsync(
+    "User",
+    User.Identity?.Name ?? "unknown",
+    "IncidentReopened",
+    "Incident",
+    incident.Id.ToString(),
+    incident.AgentEventId.ToString(),
+    $$"""
+    {
+      "status": "{{incident.Status}}"
+    }
+    """,
+    cancellationToken);
 
         return Ok(ToResponse(incident));
     }
@@ -169,6 +215,20 @@ public sealed class IncidentsController : ControllerBase
             incident.Status.ToString(),
             incident.Severity.ToString(),
             cancellationToken);
+        await _audit.WriteAsync(
+    "User",
+    User.Identity?.Name ?? "unknown",
+    "IncidentArchived",
+    "Incident",
+    incident.Id.ToString(),
+    incident.AgentEventId.ToString(),
+    $$"""
+    {
+      "isArchived": true,
+      "status": "{{incident.Status}}"
+    }
+    """,
+    cancellationToken);
 
         return NoContent();
     }

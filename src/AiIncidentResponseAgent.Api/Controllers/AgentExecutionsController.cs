@@ -25,8 +25,9 @@ public sealed class AgentExecutionsController : ControllerBase
     private readonly IAgentFeedbackHandler _feedbackHandler;
     private readonly IAgentMemoryService _memoryService;
     private readonly IAgentActionLockRepository _actionLocks;
+    private readonly IAuditService _audit;
 
-    public AgentExecutionsController(IAgentExecutionRepository executions, IUnitOfWork unitOfWork, IRealtimeNotifier realtime, IAgentEventRepository events, IAgentActionExecutor actionExecutor, IAgentFeedbackHandler feedbackHandler, IAgentMemoryService memoryService, IAgentActionLockRepository actionLocks)
+    public AgentExecutionsController(IAgentExecutionRepository executions, IUnitOfWork unitOfWork, IRealtimeNotifier realtime, IAgentEventRepository events, IAgentActionExecutor actionExecutor, IAgentFeedbackHandler feedbackHandler, IAgentMemoryService memoryService, IAgentActionLockRepository actionLocks, IAuditService audit)
     {
         _executions = executions;
         _unitOfWork = unitOfWork;
@@ -36,6 +37,7 @@ public sealed class AgentExecutionsController : ControllerBase
         _feedbackHandler = feedbackHandler;
         _memoryService = memoryService;
         _actionLocks = actionLocks;
+        _audit = audit;
     }
 
     [HttpGet]
@@ -182,6 +184,22 @@ public sealed class AgentExecutionsController : ControllerBase
                 execution.CorrelationId,
                 cancellationToken);
 
+            await _audit.WriteAsync(
+    actorType: "User",
+    actorName: User.Identity?.Name ?? "unknown",
+    action: "ExecutionApproved",
+    entityType: "AgentExecution",
+    entityId: execution.Id.ToString(),
+    correlationId: execution.CorrelationId,
+    detailsJson: $$"""
+    {
+      "reason": "{{execution.ApprovalReason}}",
+      "status": "{{execution.Status}}",
+      "action": "{{execution.Action}}"
+    }
+    """,
+    cancellationToken);
+
             return Ok(ToResponse(execution));
         }
         catch (InvalidOperationException ex)
@@ -226,6 +244,22 @@ public sealed class AgentExecutionsController : ControllerBase
                     execution.Action.ToString(),
                     execution.CorrelationId,
                     cancellationToken);  //?
+
+            await _audit.WriteAsync(
+    "User",
+    User.Identity?.Name ?? "unknown",
+    "ExecutionRejected",
+    "AgentExecution",
+    execution.Id.ToString(),
+    execution.CorrelationId,
+    $$"""
+    {
+      "reason": "{{execution.ApprovalReason}}",
+      "status": "{{execution.Status}}",
+      "action": "{{execution.Action}}"
+    }
+    """,
+    cancellationToken);
 
             return Ok(ToResponse(execution));
         }

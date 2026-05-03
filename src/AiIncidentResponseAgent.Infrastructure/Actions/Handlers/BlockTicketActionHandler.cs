@@ -18,11 +18,13 @@ public sealed class BlockTicketActionHandler : IAgentActionHandler
 {
     private readonly ITicketRepository _tickets;
     private readonly ILogger<BlockTicketActionHandler> _logger;
+    private readonly IAuditService _audit;
 
-    public BlockTicketActionHandler(ITicketRepository tickets, ILogger<BlockTicketActionHandler> logger)
+    public BlockTicketActionHandler(ITicketRepository tickets, ILogger<BlockTicketActionHandler> logger, IAuditService audit)
     {
         _tickets = tickets;
         _logger = logger;
+        _audit = audit;
     }
 
     public AgentAction Action => AgentAction.BlockTicket;
@@ -57,6 +59,17 @@ public sealed class BlockTicketActionHandler : IAgentActionHandler
     ticket.TicketCode,
     context.Event.Id,
     context.Event.CorrelationId);
+
+
+        await _audit.WriteAsync(
+    "Agent",
+    "AI Incident Response Agent",
+    "TicketBlocked",
+    "Ticket",
+    ticket.Id.ToString(),
+    context.Event.CorrelationId,
+    $$"""{"ticketCode":"{{ticket.TicketCode}}","eventId":"{{context.Event.Id}}"}""",
+    cancellationToken);
 
         var result = $$"""
         {

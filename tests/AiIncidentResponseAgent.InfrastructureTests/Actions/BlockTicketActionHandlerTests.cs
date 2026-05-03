@@ -20,7 +20,6 @@ using Moq;
 
 
 namespace AiIncidentResponseAgent.UnitTests.Actions;
-
 public sealed class BlockTicketActionHandlerTests
 {
     [Fact]
@@ -36,10 +35,12 @@ public sealed class BlockTicketActionHandlerTests
             .ReturnsAsync(ticket);
 
         var logger = Mock.Of<ILogger<BlockTicketActionHandler>>();
+        var audit = new Mock<IAuditService>();
 
         var sut = new BlockTicketActionHandler(
             repository.Object,
-            logger);
+            logger,
+            audit.Object);
 
         var agentEvent = new AgentEvent(
             AgentEventType.DuplicateScan,
@@ -60,6 +61,19 @@ public sealed class BlockTicketActionHandlerTests
         ticket.Status.Should().Be(TicketStatus.Blocked);
         ticket.BlockedAtUtc.Should().NotBeNull();
         result.ResultJson.Should().Contain("LocalTicketingModule");
+
+        audit.Verify(x => x.WriteAsync(
+                "Agent",
+                "AI Incident Response Agent",
+                "TicketBlocked",
+                "Ticket",
+                ticket.Id.ToString(),
+                agentEvent.CorrelationId,
+                It.Is<string>(json =>
+                    json.Contains("TCK-001") &&
+                    json.Contains(agentEvent.Id.ToString())),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -73,10 +87,12 @@ public sealed class BlockTicketActionHandlerTests
             .ReturnsAsync((Ticket?)null);
 
         var logger = Mock.Of<ILogger<BlockTicketActionHandler>>();
+        var audit = new Mock<IAuditService>();
 
         var sut = new BlockTicketActionHandler(
             repository.Object,
-            logger);
+            logger,
+            audit.Object);
 
         var agentEvent = new AgentEvent(
             AgentEventType.DuplicateScan,
@@ -95,6 +111,17 @@ public sealed class BlockTicketActionHandlerTests
 
         result.Success.Should().BeFalse();
         result.ErrorMessage.Should().Contain("was not found");
+
+        audit.Verify(x => x.WriteAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
@@ -102,10 +129,12 @@ public sealed class BlockTicketActionHandlerTests
     {
         var repository = new Mock<ITicketRepository>();
         var logger = Mock.Of<ILogger<BlockTicketActionHandler>>();
+        var audit = new Mock<IAuditService>();
 
         var sut = new BlockTicketActionHandler(
             repository.Object,
-            logger);
+            logger,
+            audit.Object);
 
         var agentEvent = new AgentEvent(
             AgentEventType.DuplicateScan,
@@ -124,5 +153,16 @@ public sealed class BlockTicketActionHandlerTests
 
         result.Success.Should().BeFalse();
         result.ErrorMessage.Should().Contain("ticketId");
+
+        audit.Verify(x => x.WriteAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 }

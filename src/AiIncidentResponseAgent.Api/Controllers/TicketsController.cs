@@ -17,13 +17,16 @@ public sealed class TicketsController : ControllerBase
 {
     private readonly ITicketRepository _tickets;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IAuditService _audit;
 
     public TicketsController(
         ITicketRepository tickets,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IAuditService audit)
     {
         _tickets = tickets;
         _unitOfWork = unitOfWork;
+        _audit = audit;
     }
 
     [HttpPost]
@@ -50,6 +53,21 @@ public sealed class TicketsController : ControllerBase
 
         await _tickets.AddAsync(ticket, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        await _audit.WriteAsync(
+    "User",
+    User.Identity?.Name ?? "unknown",
+    "TicketCreated",
+    "Ticket",
+    ticket.Id.ToString(),
+    ticket.TicketCode,
+    $$"""
+    {
+      "ticketCode": "{{ticket.TicketCode}}",
+      "status": "{{ticket.Status}}"
+    }
+    """,
+    cancellationToken);
 
         return CreatedAtAction(
             nameof(GetLatest),

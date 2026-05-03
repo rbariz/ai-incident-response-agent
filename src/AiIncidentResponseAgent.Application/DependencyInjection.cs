@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using AiIncidentResponseAgent.Application.Abstractions;
+using AiIncidentResponseAgent.Application.Abstractions.Repositories;
 using AiIncidentResponseAgent.Application.Models;
 using AiIncidentResponseAgent.Application.Services;
 
@@ -24,7 +25,7 @@ namespace AiIncidentResponseAgent.Application
             services.AddScoped<IAgentPolicyEngine, SafeAgentPolicyEngine>();
             services.AddScoped<IAgentFeedbackHandler, NoOpAgentFeedbackHandler>();
             services.AddScoped<IAgentMemoryService, AgentMemoryService>();
-
+            services.AddScoped<IAuditService, AuditService>();
             services.AddScoped<IAgentRetryProcessor, AgentRetryProcessor>();
 
             services.Configure<RetryOptions>(

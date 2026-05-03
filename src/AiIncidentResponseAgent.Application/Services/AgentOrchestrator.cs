@@ -35,6 +35,7 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
     private readonly IRealtimeNotifier _realtime;
     private readonly RetryOptions _retryOptions;
     private readonly ILogger<AgentOrchestrator> _logger;
+    private readonly IAuditService _audit;
 
     public AgentOrchestrator(
         IAgentEventRepository events,
@@ -51,7 +52,8 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
         ITextTranslator translator,
         IRealtimeNotifier realtime,
         IOptions<RetryOptions> retryOptions,
-        ILogger<AgentOrchestrator> logger)
+        ILogger<AgentOrchestrator> logger,
+        IAuditService audit)
     {
         _events = events;
         _executions = executions;
@@ -68,6 +70,7 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
         _translator = translator;
         _realtime = realtime;
         _logger = logger;
+        _audit = audit;
     }
 
     public async Task ProcessEventAsync(Guid eventId, CancellationToken cancellationToken = default)
@@ -228,6 +231,22 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
                 {
                     execution.MarkPendingApproval(policy.Reason);
 
+                    await _audit.WriteAsync(
+    "Agent",
+    "AI Incident Response Agent",
+    "ExecutionPendingApproval",
+    "AgentExecution",
+    execution.Id.ToString(),
+    execution.CorrelationId,
+    $$"""
+    {
+      "decision": "{{execution.Decision}}",
+      "action": "{{execution.Action}}",
+      "reason": "{{execution.ApprovalReason}}"
+    }
+    """,
+    cancellationToken);
+
                     if (incident is not null)
                     {
                         incident.MarkActionPending();
@@ -346,6 +365,21 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
 
                 execution.MarkSucceeded(actionResult.ResultJson);
 
+                await _audit.WriteAsync(
+    "Agent",
+    "AI Incident Response Agent",
+    "ExecutionSucceeded",
+    "AgentExecution",
+    execution.Id.ToString(),
+    execution.CorrelationId,
+    $$"""
+    {
+      "action": "{{execution.Action}}",
+      "status": "{{execution.Status}}"
+    }
+    """,
+    cancellationToken);
+
                 if (incident is not null)
                 {
                     incident.MarkActionExecuted();
@@ -364,6 +398,22 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
                         actionResult.ErrorMessage,
                         nextRetryAtUtc);
 
+                    await _audit.WriteAsync(
+    "Agent",
+    "AI Incident Response Agent",
+    "ExecutionRetryScheduled",
+    "AgentExecution",
+    execution.Id.ToString(),
+    execution.CorrelationId,
+    $$"""
+    {
+      "retryCount": {{execution.RetryCount}},
+      "nextRetryAtUtc": "{{execution.NextRetryAtUtc}}",
+      "error": "{{execution.ErrorMessage}}"
+    }
+    """,
+    cancellationToken);
+
                     if (incident is not null)
                     {
                         incident.MarkActionPending();
@@ -378,6 +428,20 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
                 else
                 {
                     execution.MarkFinalFailed(actionResult.ErrorMessage);
+                    await _audit.WriteAsync(
+    "Agent",
+    "AI Incident Response Agent",
+    "ExecutionFailed",
+    "AgentExecution",
+    execution.Id.ToString(),
+    execution.CorrelationId,
+    $$"""
+    {
+      "action": "{{execution.Action}}",
+      "error": "{{execution.ErrorMessage}}"
+    }
+    """,
+    cancellationToken);
 
                     if (incident is not null)
                     {
