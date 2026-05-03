@@ -6,10 +6,12 @@ using System.Threading.Tasks;
 
 using AiIncidentResponseAgent.Application.Abstractions;
 using AiIncidentResponseAgent.Domain.Actions;
+using AiIncidentResponseAgent.Domain.Auth;
 using AiIncidentResponseAgent.Domain.Events;
 using AiIncidentResponseAgent.Domain.Executions;
 using AiIncidentResponseAgent.Domain.Incidents;
 using AiIncidentResponseAgent.Domain.Memory;
+using AiIncidentResponseAgent.Domain.Ticketing;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -28,6 +30,10 @@ namespace AiIncidentResponseAgent.Infrastructure.Persistence
         public DbSet<Incident> Incidents => Set<Incident>();
 
         public DbSet<AgentActionLock> AgentActionLocks => Set<AgentActionLock>();
+
+        public DbSet<Ticket> Tickets => Set<Ticket>();
+
+        public DbSet<AuthUser> AuthUsers => Set<AuthUser>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

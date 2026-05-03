@@ -1,4 +1,5 @@
-﻿using AiIncidentResponseAgent.Domain.Executions;
+﻿using AiIncidentResponseAgent.Contracts.Common;
+using AiIncidentResponseAgent.Domain.Executions;
 
 namespace AiIncidentResponseAgent.Application.Abstractions.Repositories
 {
@@ -17,6 +18,22 @@ namespace AiIncidentResponseAgent.Application.Abstractions.Repositories
         Task<IReadOnlyList<AgentExecution>> GetLatestByCorrelationAsync(
     string? correlationId,
     int take,
+    CancellationToken cancellationToken = default);
+
+        Task<AgentExecution?> GetByIdAsync(
+    Guid id,
+    CancellationToken cancellationToken = default);
+
+
+        Task<PagedResponse<AgentExecution>> GetPagedAsync(
+    string? correlationId,
+    int page,
+    int pageSize,
+    CancellationToken cancellationToken = default);
+
+        Task<IReadOnlyList<AgentExecution>> GetRetryDueAsync(
+    int take,
+    DateTime nowUtc,
     CancellationToken cancellationToken = default);
     }
 }

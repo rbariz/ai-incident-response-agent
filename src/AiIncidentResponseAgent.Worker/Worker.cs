@@ -44,6 +44,10 @@ public sealed class Worker : BackgroundService
 
     private async Task ProcessBatchAsync(CancellationToken cancellationToken)
     {
+
+        _logger.LogInformation(
+    "Worker polling cycle started. BatchSize={BatchSize}",
+    _options.BatchSize);
         using var scope = _scopeFactory.CreateScope();
 
         var events = scope.ServiceProvider.GetRequiredService<IAgentEventRepository>();
@@ -55,7 +59,38 @@ public sealed class Worker : BackgroundService
 
         if (unprocessedEvents.Count == 0)
         {
-            return;
+            _logger.LogDebug("No unprocessed agent events found.");
+        }
+        else
+        {
+            _logger.LogInformation(
+                "Found {Count} unprocessed agent events.",
+                unprocessedEvents.Count);
+
+            foreach (var agentEvent in unprocessedEvents)
+            {
+                using var eventScope = _logger.BeginScope(new Dictionary<string, object>
+                {
+                    ["EventId"] = agentEvent.Id,
+                    ["CorrelationId"] = agentEvent.CorrelationId,
+                    ["EventType"] = agentEvent.Type.ToString()
+                });
+
+                try
+                {
+                    _logger.LogInformation("Processing agent event.");
+
+                    await orchestrator.ProcessEventAsync(
+                        agentEvent.Id,
+                        cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(
+                        ex,
+                        "Failed to process agent event.");
+                }
+            }
         }
 
         _logger.LogInformation(
@@ -76,5 +111,15 @@ public sealed class Worker : BackgroundService
                     agentEvent.Id);
             }
         }
+
+        var retryProcessor = scope.ServiceProvider.GetRequiredService<IAgentRetryProcessor>();
+
+        _logger.LogInformation("Worker retry cycle started.");
+
+        await retryProcessor.ProcessRetriesAsync(
+            _options.BatchSize,
+            cancellationToken);
+
+        _logger.LogInformation("Worker retry cycle completed.");
     }
 }

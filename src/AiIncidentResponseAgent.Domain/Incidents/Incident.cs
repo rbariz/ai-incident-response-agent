@@ -27,6 +27,8 @@ namespace AiIncidentResponseAgent.Domain.Incidents
 
         public DateTime? ResolvedAtUtc { get; private set; }
 
+        public bool IsArchived { get; private set; }
+
         public void MarkAnalyzing() => Status = IncidentStatus.Analyzing;
 
         public void MarkActionPending() => Status = IncidentStatus.ActionPending;
@@ -42,5 +44,27 @@ namespace AiIncidentResponseAgent.Domain.Incidents
         public void Fail() => Status = IncidentStatus.Failed;
 
         public void Escalate() => Status = IncidentStatus.Escalated;
+
+
+        public void UpdateDetails(
+            string title,
+            string description,
+            IncidentSeverity severity)
+        {
+            Title = title.Trim();
+            Description = description.Trim();
+            Severity = severity;
+        }
+
+        public void Reopen()
+        {
+            Status = IncidentStatus.New;
+            ResolvedAtUtc = null;
+        }
+
+        public void Archive()
+        {
+            IsArchived = true;
+        }
     }
 }

@@ -1,113 +1,181 @@
 🧠 AI Incident Response Agent
 
-Autonomous Operational AI Platform for real-time incident detection, decision, and automated response.
+Autonomous Operational AI Platform for real-time incident detection, decision, approval, action execution, observability and automated response.
 
 ---
 
 ## 🚀 Vision
 
-Build an autonomous AI agent capable of:
+Build a controlled autonomous AI agent capable of:
 
-- Detecting critical events
-- Understanding context (AI + business rules)
-- Making decisions
-- Executing actions automatically
+- Detecting critical operational events
+- Understanding context using AI + business rules
+- Making deterministic decisions
+- Executing safe actions
+- Requesting human approval when needed
 - Observing outcomes
-- Learning via feedback loop
+- Retrying failed actions with backoff
+- Providing full auditability and traceability
 
-👉 Goal: **automate operational workflows in a reliable, explainable and controlled way**
+Goal: **automate operational workflows in a reliable, explainable and controlled way**.
 
 ---
 
 ## 🧩 Architecture
 
 ```text
-Event → Detection → Analysis → Decision → Action → Feedback → Memory
+Event → Detection → Analysis → Decision → Policy → Action → Feedback → Memory → Realtime → Metrics
 Core principles
-AI is not the decision maker
-Business rules & policies control actions
-Full auditability & traceability
-Autonomy levels (observe → suggest → act → escalate)
+AI is not the final decision maker
+Business rules and policies control execution
+Critical actions can require manual approval
+Full auditability and traceability
+Idempotency and action locks prevent duplicate actions
+Observability is built in: logs, metrics, health checks
+
 🏗️ Project Structure
 src/
-├─ Api              → HTTP endpoints + Swagger
-├─ Worker           → background processing (agent execution)
-├─ Domain           → core entities (DDD)
-├─ Application      → orchestrator + contracts
-├─ Infrastructure   → EF Core, persistence, integrations
-├─ Contracts        → DTOs
+├─ AiIncidentResponseAgent.Api              → HTTP API, Swagger, Auth, SignalR, Health Checks
+├─ AiIncidentResponseAgent.Worker           → Background processing and retry execution
+├─ AiIncidentResponseAgent.Domain           → Core entities and domain rules
+├─ AiIncidentResponseAgent.Application      → Orchestrator, contracts, policies, services
+├─ AiIncidentResponseAgent.Infrastructure   → EF Core, PostgreSQL, Ollama, repositories, integrations
+├─ AiIncidentResponseAgent.Contracts        → DTOs and API contracts
 
-ops-center/         → React/TanStack dashboard (Ops UI)
+ops-center/                                
+
+→ React/TanStack Ops Center UI
 
 tests/
-├─ UnitTests
-├─ IntegrationTests
+├─ AiIncidentResponseAgent.UnitTests
+├─ AiIncidentResponseAgent.IntegrationTests
+
 ⚙️ Tech Stack
 .NET 8
-ASP.NET Core
+ASP.NET Core Web API
 PostgreSQL
 Entity Framework Core
 Background Worker
-Ollama (local LLM) 🔥
-Swagger
-Tailwind / React (Ops Center UI)
+SignalR realtime
+JWT Auth + RBAC
+Ollama local LLM
+Swagger / OpenAPI
+React / TanStack / Tailwind CSS
+Health Checks (ASP.NET Core)
+Structured logging (ILogger)
+
 🧠 Core Components
 Component	Role
-Event Ingestion	Capture system events
-Orchestrator	Coordinate full agent flow
-AI Analyzer	Understand context (Ollama)
-Decision Engine	Apply business logic
+Event Ingestion	Capture incoming operational events
+Worker	Process unhandled events asynchronously
+Orchestrator	Coordinate the full agent lifecycle
+AI Analyzer	Analyze events using Ollama
+Decision Engine	Apply deterministic business decisions
 Policy Engine	Enforce safety rules
-Action Executor	Execute actions
-Memory System	Context persistence
-Feedback Loop	Improve behavior
+Manual Approval	Human approve/reject workflow
+Action Executor	Execute approved or automatic actions
+Ticketing Module	Local real ticket blocking module
+Memory System	Persist context across executions
+Feedback Loop	Update memory and execution state
+SignalR Realtime	Push live updates to Ops Center
+Metrics	Business and technical monitoring
+Health Checks	API, DB and Ollama readiness
+
 🔐 Safety & Control
-AI is always bounded
-Policy engine controls execution
-Idempotency prevents duplicate actions
-agent_action_locks for concurrency safety
-Full execution logs & traceability
+AI is bounded and never executes actions directly
+Deterministic policies control action execution
+agent_action_locks prevent duplicate successful actions
+Manual approval is supported for sensitive decisions
+Retry strategy uses backoff and does not re-run AI analysis
+Full execution logs and incident tracking are persisted
+
 🌍 AI Capabilities
 Local AI via Ollama
-Deterministic JSON output
-Guardrails + validation
-Retry + fallback (stub analyzer)
-Bilingual summaries:
+Strict JSON response validation
+Guardrails and fallback stub analyzer
+Retry/fallback when AI output is invalid
+Bilingual AI summaries:
 AnalysisSummaryFr
 AnalysisSummaryEn
-Language-aware processing (lang end-to-end)
-🖥️ Ops Center (UI)
+lang is carried end-to-end from event ingestion to AI analysis
 
-A modern SaaS-style dashboard to monitor the agent:
+🖥️ Ops Center
+
+The ops-center/ folder contains a premium SaaS-style dashboard.
+
+Current UI capabilities:
 
 Dashboard KPIs
+Technical metrics
 Events list
 Executions tracking
+Execution details
 Incidents monitoring
+Incident edit / resolve / reopen / archive
+Tickets page
+Manual approve / reject workflow
 Timeline view
-Execution details panel
+SignalR realtime updates
+Login / logout
+Role-based UI:
+Viewer
+Operator
+Admin
+🔑 Auth / RBAC
 
-👉 Located in: ops-center/
+Development users:
+
+Username	Password	Role
+admin	Admin123!	Admin
+operator	Operator123!	Operator
+viewer	Viewer123!	Viewer
+
+Roles:
+
+Role	Permissions
+Viewer	Read-only access
+Operator	Approve/reject executions, manage tickets, manage incidents
+Admin	Full access including archive/delete actions
 
 🚀 Getting Started
-1. Run API
+1. Run PostgreSQL
+
+Make sure PostgreSQL is running and the connection string is configured in:
+
+appsettings.Development.json
+2. Apply migrations
+dotnet ef database update \
+  --project src/AiIncidentResponseAgent.Infrastructure \
+  --startup-project src/AiIncidentResponseAgent.Api \
+  --context AgentDbContext
+3. Run API
 dotnet run --project src/AiIncidentResponseAgent.Api
-2. Run Worker
+
+Default local API:
+
+http://localhost:5027
+4. Run Worker
 dotnet run --project src/AiIncidentResponseAgent.Worker
-3. Run Ops Center
+5. Run Ops Center
 cd ops-center
 npm install
 npm run dev
+
 🤖 Ollama Setup
 
-Install Ollama and pull a model:
+Install Ollama and pull a local model:
 
 ollama pull llama3
 ollama run llama3
 
-Default endpoint:
+Default Ollama endpoint:
 
 http://localhost:11434
+
+Health check:
+
+GET /health/ready
+
 🧪 Load Testing
 
 Example PowerShell script:
@@ -126,94 +194,123 @@ for ($i = 1; $i -le 100; $i++) {
         -Body $body `
         -ContentType "application/json"
 }
+
+📊 Metrics
+Business metrics
+GET /api/metrics/overview
+
+Includes:
+
+Total events
+Pending events
+Total executions
+Succeeded / failed / skipped executions
+Pending approvals
+Incidents
+Tickets
+Success rate
+Failure rate
+Technical metrics
+GET /api/metrics/technical
+
+Includes:
+
+Average execution duration
+Max execution duration
+Total retries
+Retry scheduled executions
+AI provider usage
+Action usage
+Status distribution
+
+❤️ Health Checks
+
+The API exposes health endpoints for operational monitoring:
+
+GET /health
+GET /health/live
+GET /health/ready
+
+Readiness checks:
+
+PostgreSQL connectivity
+Ollama availability
+
 📊 Current Status
+
 ✅ Implemented
-Full backend architecture (DDD + clean layering)
+Clean architecture / DDD-style layering
+PostgreSQL persistence
 Event ingestion API
-Worker polling & processing
-Orchestrator (end-to-end flow)
-Ollama AI Analyzer (local)
-Decision + Policy engines
-Action execution with safety locks
-Execution & incident tracking
-Bilingual AI summaries
-Ops Center dashboard (read-only)
-🚧 Next Steps
-CRUD operations (incidents / executions)
-Manual override / approval UI
-SignalR real-time updates
-Metrics & observability
-External integrations (real actions)
-Authentication / RBAC
-Multi-tenant support
+Worker polling
+Agent orchestrator
+Ollama AI analyzer
+JSON validation and fallback analyzer
+Decision engine
+Policy engine
+Action executor
+Local ticketing module with real persisted BlockTicket
+Manual approval / reject workflow
+Retry strategy with backoff
+Action locks after successful execution
+Incident CRUD
+JWT authentication
+RBAC roles: Viewer, Operator, Admin
+SignalR realtime notifications
+Metrics dashboard backend
+Technical metrics backend
+Health checks
+Structured logging
+Ops Center UI
+
+🚧 Current Limitations / Future Work
+Real external BlockTicket API integration is not implemented yet; current implementation uses a local Ticketing module
+Production observability can be improved with OpenTelemetry, traces and external log sinks
+Detailed audit trail for all user/operator actions is not implemented yet
+Automated tests are still limited / to be completed
+Docker Compose demo packaging is not completed yet
+Security hardening can be improved with refresh tokens, SignalR JWT auth, stronger internal API protection and secret management
+
+📸 Screenshots
+🧭 Dashboard
+
+Overview of the agent activity with key metrics.
+![Dashboard](docs/screenshots/dashboard.png)
+
+⚡ Agent Executions
+
+Track agent executions, statuses, decisions, actions, AI provider and confidence score.
+![Executions](docs/screenshots/executions.png)
+
+🔍 Execution Details
+
+Detailed view of a single execution with AI summary, result JSON, retry information and timestamps.
+![Execution Details](docs/screenshots/execution-details.png)
+
+🚨 Incidents
+
+Monitor incidents, severity, status and lifecycle.
+![Incidents](docs/screenshots/incidents.png)
+
+🎟️ Tickets
+
+Track local tickets and BlockTicket execution results.
+![Tickets](docs/screenshots/tickets.png)
+
+🕒 Timeline
+
+Chronological view of events, executions and incidents.
+![Timeline](docs/screenshots/timeline.png)
+
 🎯 Goal
 
 Build a production-grade autonomous agent platform capable of:
 
-Acting without human intervention
+Acting without human intervention when safe
+Requesting approval when required
 Explaining decisions
-Remaining safe and controlled
+Remaining controlled and auditable
 Scaling to real operational workloads
-
-## 📸 Screenshots
-
-### 🧭 Dashboard
-
-Overview of the agent activity with key metrics:
-- Total events
-- Executions
-- Incidents
-- Pending processing
-
-![Dashboard](docs/screenshots/dashboard.png)
-
----
-
-### ⚡ Agent Executions
-
-Track all agent executions:
-- Status (Succeeded / Failed / Skipped)
-- Decision & Action
-- AI Provider (Ollama / Stub)
-- Confidence Score
-- Correlation ID
-
-![Executions](docs/screenshots/executions.png)
-
----
-
-### 🔍 Execution Details
-
-Detailed view of a single execution:
-- Decision & action taken
-- AI summary (FR/EN)
-- Confidence score
-- Result JSON (formatted)
-- Execution timestamps
-
-![Execution Details](docs/screenshots/execution-details.png)
-
----
-
-### 🚨 Incidents
-
-Monitor detected incidents:
-- Title & description
-- Severity & status
-- Lifecycle (created → resolved)
-
-![Incidents](docs/screenshots/incidents.png)
-
----
-
-### 🕒 Timeline
-
-Chronological view of the agent activity:
-- Events
-- Executions
-- Incidents
-
-![Timeline](docs/screenshots/timeline.png)
 
 👨 Author
 

@@ -5,7 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 
 using AiIncidentResponseAgent.Application.Abstractions.Repositories;
+using AiIncidentResponseAgent.Contracts.Common;
 using AiIncidentResponseAgent.Domain.Events;
+using AiIncidentResponseAgent.Domain.Executions;
+using AiIncidentResponseAgent.Infrastructure.Persistence.Paging;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -49,5 +52,18 @@ public sealed class AgentEventRepository : IAgentEventRepository
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(take)
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<PagedResponse<AgentEvent>> GetPagedAsync(
+    int page,
+    int pageSize,
+    CancellationToken cancellationToken = default)
+    {
+        var query = _db.AgentEvents.AsQueryable();
+
+
+        return await query
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .ToPagedResponseAsync(page, pageSize, cancellationToken);
     }
 }

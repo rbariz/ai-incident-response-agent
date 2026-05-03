@@ -48,11 +48,19 @@ export function StatusBadge({
 }
 
 export function toneForStatus(s?: string | null): Tone {
-  const v = (s ?? "").toLowerCase();
+  const v = (s ?? "").toLowerCase().replace(/[_-]/g, "");
+  if (v === "pendingapproval") return "warning";
+  if (v === "approved") return "info";
+  if (v === "rejected") return "error";
+  if (v === "retryscheduled") return "warning";
+  if (v === "blocked") return "error";
+  if (v === "used") return "muted";
+  if (v === "active") return "success";
   if (["success", "succeeded", "ok", "completed", "resolved", "done"].includes(v)) return "success";
   if (["failed", "error", "critical"].includes(v)) return "error";
-  if (["skipped", "ignored", "cancelled", "canceled"].includes(v)) return "muted";
-  if (["pending", "running", "in_progress", "open", "active"].includes(v)) return "info";
+  if (["skipped", "ignored", "cancelled", "canceled", "archived"].includes(v)) return "muted";
+  if (["running", "inprogress"].includes(v)) return "primary";
+  if (["pending", "open"].includes(v)) return "info";
   if (["warning", "warn", "degraded"].includes(v)) return "warning";
   return "primary";
 }

@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TimelineRouteImport } from './routes/timeline'
+import { Route as TicketsRouteImport } from './routes/tickets'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as IncidentsRouteImport } from './routes/incidents'
 import { Route as ExecutionsRouteImport } from './routes/executions'
 import { Route as EventsRouteImport } from './routes/events'
@@ -18,6 +20,16 @@ import { Route as IndexRouteImport } from './routes/index'
 const TimelineRoute = TimelineRouteImport.update({
   id: '/timeline',
   path: '/timeline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TicketsRoute = TicketsRouteImport.update({
+  id: '/tickets',
+  path: '/tickets',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IncidentsRoute = IncidentsRouteImport.update({
@@ -46,6 +58,8 @@ export interface FileRoutesByFullPath {
   '/events': typeof EventsRoute
   '/executions': typeof ExecutionsRoute
   '/incidents': typeof IncidentsRoute
+  '/login': typeof LoginRoute
+  '/tickets': typeof TicketsRoute
   '/timeline': typeof TimelineRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +67,8 @@ export interface FileRoutesByTo {
   '/events': typeof EventsRoute
   '/executions': typeof ExecutionsRoute
   '/incidents': typeof IncidentsRoute
+  '/login': typeof LoginRoute
+  '/tickets': typeof TicketsRoute
   '/timeline': typeof TimelineRoute
 }
 export interface FileRoutesById {
@@ -61,14 +77,38 @@ export interface FileRoutesById {
   '/events': typeof EventsRoute
   '/executions': typeof ExecutionsRoute
   '/incidents': typeof IncidentsRoute
+  '/login': typeof LoginRoute
+  '/tickets': typeof TicketsRoute
   '/timeline': typeof TimelineRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/events' | '/executions' | '/incidents' | '/timeline'
+  fullPaths:
+    | '/'
+    | '/events'
+    | '/executions'
+    | '/incidents'
+    | '/login'
+    | '/tickets'
+    | '/timeline'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/events' | '/executions' | '/incidents' | '/timeline'
-  id: '__root__' | '/' | '/events' | '/executions' | '/incidents' | '/timeline'
+  to:
+    | '/'
+    | '/events'
+    | '/executions'
+    | '/incidents'
+    | '/login'
+    | '/tickets'
+    | '/timeline'
+  id:
+    | '__root__'
+    | '/'
+    | '/events'
+    | '/executions'
+    | '/incidents'
+    | '/login'
+    | '/tickets'
+    | '/timeline'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -76,6 +116,8 @@ export interface RootRouteChildren {
   EventsRoute: typeof EventsRoute
   ExecutionsRoute: typeof ExecutionsRoute
   IncidentsRoute: typeof IncidentsRoute
+  LoginRoute: typeof LoginRoute
+  TicketsRoute: typeof TicketsRoute
   TimelineRoute: typeof TimelineRoute
 }
 
@@ -86,6 +128,20 @@ declare module '@tanstack/react-router' {
       path: '/timeline'
       fullPath: '/timeline'
       preLoaderRoute: typeof TimelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tickets': {
+      id: '/tickets'
+      path: '/tickets'
+      fullPath: '/tickets'
+      preLoaderRoute: typeof TicketsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/incidents': {
@@ -124,6 +180,8 @@ const rootRouteChildren: RootRouteChildren = {
   EventsRoute: EventsRoute,
   ExecutionsRoute: ExecutionsRoute,
   IncidentsRoute: IncidentsRoute,
+  LoginRoute: LoginRoute,
+  TicketsRoute: TicketsRoute,
   TimelineRoute: TimelineRoute,
 }
 export const routeTree = rootRouteImport

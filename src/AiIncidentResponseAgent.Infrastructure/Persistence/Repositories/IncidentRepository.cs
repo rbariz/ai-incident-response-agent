@@ -1,5 +1,8 @@
 ﻿using AiIncidentResponseAgent.Application.Abstractions.Repositories;
+using AiIncidentResponseAgent.Contracts.Common;
+using AiIncidentResponseAgent.Domain.Executions;
 using AiIncidentResponseAgent.Domain.Incidents;
+using AiIncidentResponseAgent.Infrastructure.Persistence.Paging;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -50,5 +53,21 @@ public sealed class IncidentRepository : IIncidentRepository
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(take)
             .ToListAsync(cancellationToken);
+    }
+
+    
+
+    public async Task<PagedResponse<Incident>> GetPagedAsync(
+    int page,
+    int pageSize,
+    CancellationToken cancellationToken = default)
+    {
+        var query = _db.Incidents.AsQueryable();
+
+        query = query.Where(x => !x.IsArchived);
+
+        return await query
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .ToPagedResponseAsync(page, pageSize, cancellationToken);
     }
 }

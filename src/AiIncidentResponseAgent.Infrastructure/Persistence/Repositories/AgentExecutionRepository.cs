@@ -1,5 +1,7 @@
 ﻿using AiIncidentResponseAgent.Application.Abstractions.Repositories;
+using AiIncidentResponseAgent.Contracts.Common;
 using AiIncidentResponseAgent.Domain.Executions;
+using AiIncidentResponseAgent.Infrastructure.Persistence.Paging;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -51,6 +53,46 @@ public sealed class AgentExecutionRepository : IAgentExecutionRepository
 
         return await query
             .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+    }
+
+    public Task<AgentExecution?> GetByIdAsync(
+    Guid id,
+    CancellationToken cancellationToken = default)
+    {
+        return _db.AgentExecutions.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
+
+    public async Task<PagedResponse<AgentExecution>> GetPagedAsync(
+    string? correlationId,
+    int page,
+    int pageSize,
+    CancellationToken cancellationToken = default)
+    {
+        var query = _db.AgentExecutions.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(correlationId))
+        {
+            query = query.Where(x => x.CorrelationId == correlationId);
+        }
+
+        return await query
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .ToPagedResponseAsync(page, pageSize, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<AgentExecution>> GetRetryDueAsync(
+    int take,
+    DateTime nowUtc,
+    CancellationToken cancellationToken = default)
+    {
+        return await _db.AgentExecutions
+            .Where(x =>
+                x.Status == AgentExecutionStatus.RetryScheduled &&
+                x.NextRetryAtUtc != null &&
+                x.NextRetryAtUtc <= nowUtc)
+            .OrderBy(x => x.NextRetryAtUtc)
             .Take(take)
             .ToListAsync(cancellationToken);
     }

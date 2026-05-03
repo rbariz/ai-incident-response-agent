@@ -1,10 +1,12 @@
 ﻿using AiIncidentResponseAgent.Application.Abstractions.Repositories;
 using AiIncidentResponseAgent.Contracts.Ops;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AiIncidentResponseAgent.Api.Controllers;
 
+[Authorize(Policy = "CanViewOps")]
 [ApiController]
 [Route("api/agent-timeline")]
 public sealed class AgentTimelineController : ControllerBase

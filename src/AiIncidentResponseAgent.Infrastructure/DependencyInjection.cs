@@ -9,12 +9,15 @@ using AiIncidentResponseAgent.Application.Abstractions.Repositories;
 using AiIncidentResponseAgent.Infrastructure.Actions;
 using AiIncidentResponseAgent.Infrastructure.Actions.Handlers;
 using AiIncidentResponseAgent.Infrastructure.Ai;
+using AiIncidentResponseAgent.Infrastructure.Auth;
 using AiIncidentResponseAgent.Infrastructure.Persistence;
 using AiIncidentResponseAgent.Infrastructure.Persistence.Repositories;
+using AiIncidentResponseAgent.Infrastructure.Realtime;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 using static AiIncidentResponseAgent.Infrastructure.Ai.StubAgentAnalyzer;
 
@@ -38,6 +41,18 @@ public static class DependencyInjection
         services.AddScoped<IIncidentRepository, IncidentRepository>();
         services.AddScoped<IAgentMemoryRepository, AgentMemoryRepository>();
         services.AddScoped<IAgentActionLockRepository, AgentActionLockRepository>();
+
+        services.AddScoped<ITicketRepository, TicketRepository>();
+        services.AddScoped<IAuthUserRepository, AuthUserRepository>();
+
+        services.AddScoped<IAgentMetricsRepository, AgentMetricsRepository>();
+
+
+
+        services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
+
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<IJwtTokenService, JwtTokenService>();
         /*
         services.Configure<OpenAiAnalyzerOptions>(
     configuration.GetSection("OpenAiAnalyzer"));
@@ -68,11 +83,35 @@ public static class DependencyInjection
         });
 
 
+
+
+
         services.AddScoped<IAgentActionExecutor, AgentActionExecutor>();
 
         services.AddScoped<IAgentActionHandler, BlockTicketActionHandler>();
         services.AddScoped<IAgentActionHandler, CreateIncidentActionHandler>();
         services.AddScoped<IAgentActionHandler, SendNotificationActionHandler>();
+
+        services.AddScoped<IAgentActionHandler, EscalateActionHandler>();
+
+        //services.TryAddScoped<IRealtimeNotifier, NoOpRealtimeNotifier>();
+
+        services.Configure<RealtimeOptions>(
+    configuration.GetSection("Realtime"));
+
+        services.TryAddScoped<IRealtimeNotifier, NoOpRealtimeNotifier>();
+
+        services.AddHttpClient<HttpRealtimeNotifier>((sp, client) =>
+        {
+            var options = sp.GetRequiredService<
+                Microsoft.Extensions.Options.IOptions<RealtimeOptions>>().Value;
+
+            client.BaseAddress = new Uri(options.ApiBaseUrl);
+        });
+
+        services.Configure<InternalApiKeyOptions>(
+    configuration.GetSection("InternalApiKey"));
+
 
         return services;
     }

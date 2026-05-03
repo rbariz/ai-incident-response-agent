@@ -63,6 +63,47 @@ namespace AiIncidentResponseAgent.Infrastructure.Migrations
                     b.ToTable("agent_action_locks", (string)null);
                 });
 
+            modelBuilder.Entity("AiIncidentResponseAgent.Domain.Auth.AuthUser", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("password_hash");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer")
+                        .HasColumnName("role");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("username");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Role");
+
+                    b.HasIndex("Username")
+                        .IsUnique();
+
+                    b.ToTable("auth_users", (string)null);
+                });
+
             modelBuilder.Entity("AiIncidentResponseAgent.Domain.Events.AgentEvent", b =>
                 {
                     b.Property<Guid>("Id")
@@ -165,6 +206,16 @@ namespace AiIncidentResponseAgent.Infrastructure.Migrations
                         .HasColumnType("character varying(4000)")
                         .HasColumnName("analysis_summary_fr");
 
+                    b.Property<string>("ApprovalReason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("approval_reason");
+
+                    b.Property<DateTime?>("ApprovedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("approved_at_utc");
+
                     b.Property<DateTime?>("CompletedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("completed_at_utc");
@@ -204,6 +255,18 @@ namespace AiIncidentResponseAgent.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("incident_id");
 
+                    b.Property<DateTime?>("LastRetryAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_retry_at_utc");
+
+                    b.Property<DateTime?>("NextRetryAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_retry_at_utc");
+
+                    b.Property<DateTime?>("RejectedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("rejected_at_utc");
+
                     b.Property<string>("ResultJson")
                         .IsRequired()
                         .HasColumnType("jsonb")
@@ -234,6 +297,10 @@ namespace AiIncidentResponseAgent.Infrastructure.Migrations
 
                     b.HasIndex("IncidentId");
 
+                    b.HasIndex("NextRetryAtUtc");
+
+                    b.HasIndex("Status");
+
                     b.ToTable("agent_executions", (string)null);
                 });
 
@@ -258,6 +325,10 @@ namespace AiIncidentResponseAgent.Infrastructure.Migrations
                         .HasColumnType("character varying(4000)")
                         .HasColumnName("description");
 
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_archived");
+
                     b.Property<DateTime?>("ResolvedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("resolved_at_utc");
@@ -281,6 +352,8 @@ namespace AiIncidentResponseAgent.Infrastructure.Migrations
                     b.HasIndex("AgentEventId");
 
                     b.HasIndex("CreatedAtUtc");
+
+                    b.HasIndex("IsArchived");
 
                     b.HasIndex("Severity");
 
@@ -329,6 +402,49 @@ namespace AiIncidentResponseAgent.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("agent_memory", (string)null);
+                });
+
+            modelBuilder.Entity("AiIncidentResponseAgent.Domain.Ticketing.Ticket", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime?>("BlockedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("blocked_at_utc");
+
+                    b.Property<string>("BlockedReason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("blocked_reason");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<string>("TicketCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("ticket_code");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAtUtc");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TicketCode")
+                        .IsUnique();
+
+                    b.ToTable("tickets", (string)null);
                 });
 #pragma warning restore 612, 618
         }

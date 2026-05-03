@@ -12,6 +12,11 @@ namespace AiIncidentResponseAgent.Domain.Executions
         Running = 2,
         Succeeded = 3,
         Failed = 4,
-        Skipped = 5
+        Skipped = 5,
+
+        PendingApproval = 6,
+        Approved = 7,
+        Rejected = 8,
+        RetryScheduled = 9
     }
 }

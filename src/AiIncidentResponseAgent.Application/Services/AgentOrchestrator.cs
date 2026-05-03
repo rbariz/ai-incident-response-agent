@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,8 +9,12 @@ using AiIncidentResponseAgent.Application.Abstractions;
 using AiIncidentResponseAgent.Application.Abstractions.Repositories;
 using AiIncidentResponseAgent.Application.Models;
 using AiIncidentResponseAgent.Domain.Actions;
+using AiIncidentResponseAgent.Domain.Events;
 using AiIncidentResponseAgent.Domain.Executions;
 using AiIncidentResponseAgent.Domain.Incidents;
+
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace AiIncidentResponseAgent.Application.Services;
 
@@ -27,6 +32,9 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
     private readonly IUnitOfWork _unitOfWork;
     private readonly IAgentActionLockRepository _actionLocks;
     private readonly ITextTranslator _translator;
+    private readonly IRealtimeNotifier _realtime;
+    private readonly RetryOptions _retryOptions;
+    private readonly ILogger<AgentOrchestrator> _logger;
 
     public AgentOrchestrator(
         IAgentEventRepository events,
@@ -40,12 +48,16 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
         IAgentMemoryService memoryService,
         IUnitOfWork unitOfWork,
         IAgentActionLockRepository actionLocks,
-        ITextTranslator translator)
+        ITextTranslator translator,
+        IRealtimeNotifier realtime,
+        IOptions<RetryOptions> retryOptions,
+        ILogger<AgentOrchestrator> logger)
     {
         _events = events;
         _executions = executions;
         _incidents = incidents;
         _analyzer = analyzer;
+        _retryOptions = retryOptions.Value;
         _decisionEngine = decisionEngine;
         _policyEngine = policyEngine;
         _actionExecutor = actionExecutor;
@@ -54,6 +66,8 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
         _unitOfWork = unitOfWork;
         _actionLocks = actionLocks;
         _translator = translator;
+        _realtime = realtime;
+        _logger = logger;
     }
 
     public async Task ProcessEventAsync(Guid eventId, CancellationToken cancellationToken = default)
@@ -64,6 +78,19 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
         {
             return;
         }
+        using var logScope = _logger.BeginScope(new Dictionary<string, object>
+        {
+            ["EventId"] = agentEvent.Id,
+            ["CorrelationId"] = agentEvent.CorrelationId,
+            ["EventType"] = agentEvent.Type.ToString()
+        });
+
+        var stopwatch = Stopwatch.StartNew();
+
+        _logger.LogInformation(
+            "Agent event processing started. EventType={EventType}, CorrelationId={CorrelationId}",
+            agentEvent.Type,
+            agentEvent.CorrelationId);
 
         var idempotencyKey = $"action-event:{agentEvent.Id}";
 
@@ -73,6 +100,9 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
 
         if (existingExecution is not null)
         {
+            _logger.LogInformation(
+    "Agent event skipped because execution already exists. IdempotencyKey={IdempotencyKey}",
+    idempotencyKey);
             return;
         }
 
@@ -85,6 +115,16 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         execution.Start();
+
+        _logger.LogInformation(
+    "Agent execution started. ExecutionId={ExecutionId}",
+    execution.Id);
+
+        await _realtime.AgentExecutionStartedAsync(
+            execution.Id,
+            agentEvent.Id,
+            agentEvent.CorrelationId,
+            cancellationToken);
 
         try
         {
@@ -130,15 +170,29 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
                 analysis,
                 cancellationToken);
 
+            _logger.LogInformation(
+    "AI analysis completed. ExecutionId={ExecutionId}, Provider={Provider}, Language={Language}, Confidence={ConfidenceScore}",
+    execution.Id,
+    analysis.Provider,
+    analysisLang,
+    analysis.ConfidenceScore);
+
             execution.SetDecision(
                 decision.Decision,
                 decision.Action,
                 analysis.Summary,
                 analysis.ConfidenceScore,
-                 analysis.Provider,
-                 analysisLang,
+                analysis.Provider,
+                analysisLang,
                 analysisSummaryFr,
                 analysisSummaryEn);
+
+            _logger.LogInformation(
+    "Decision computed. ExecutionId={ExecutionId}, Decision={Decision}, Action={Action}, RequiresHumanApproval={RequiresHumanApproval}",
+    execution.Id,
+    decision.Decision,
+    decision.Action,
+    decision.RequiresHumanApproval);
 
             Incident? incident = null;
 
@@ -154,6 +208,13 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
 
                 await _incidents.AddAsync(incident, cancellationToken);
                 execution.AttachIncident(incident.Id);
+
+                await _realtime.IncidentChangedAsync(
+                    incident.Id,
+                    agentEvent.Id,
+                    incident.Status.ToString(),
+                    incident.Severity.ToString(),
+                    cancellationToken);
             }
 
             var policy = await _policyEngine.CheckAsync(
@@ -163,16 +224,57 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
 
             if (!policy.Allowed)
             {
-                execution.MarkSkipped(policy.Reason);
-
-                if (incident is not null)
+                if (decision.RequiresHumanApproval)
                 {
-                    incident.Escalate();
+                    execution.MarkPendingApproval(policy.Reason);
+
+                    if (incident is not null)
+                    {
+                        incident.MarkActionPending();
+                    }
+                }
+                else
+                {
+                    execution.MarkSkipped(policy.Reason);
+
+                    if (incident is not null)
+                    {
+                        incident.Escalate();
+                    }
                 }
 
                 agentEvent.MarkProcessed();
 
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                await NotifyExecutionCompletedAsync(
+                    execution,
+                    agentEvent,
+                    incident,
+                    cancellationToken);
+
+                return;
+            }
+
+            if (decision.RequiresHumanApproval)
+            {
+                execution.MarkPendingApproval(decision.Reason);
+
+                if (incident is not null)
+                {
+                    incident.MarkActionPending();
+                }
+
+                agentEvent.MarkProcessed();
+
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                await NotifyExecutionCompletedAsync(
+                    execution,
+                    agentEvent,
+                    incident,
+                    cancellationToken);
+
                 return;
             }
 
@@ -188,22 +290,31 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
                 agentEvent.MarkProcessed();
 
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                await NotifyExecutionCompletedAsync(
+                    execution,
+                    agentEvent,
+                    incident,
+                    cancellationToken);
+
                 return;
             }
 
-
-            var actionLock = new AgentActionLock(
-                    decision.Action,
-                    context.Event.CorrelationId,
-                    agentEvent.Id);
-
-            await _actionLocks.AddAsync(actionLock, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation(
+    "Executing action. ExecutionId={ExecutionId}, Action={Action}",
+    execution.Id,
+    decision.Action);
 
             var actionResult = await _actionExecutor.ExecuteAsync(
                 decision.Action,
                 context,
                 cancellationToken);
+
+            _logger.LogInformation(
+    "Action execution completed. ExecutionId={ExecutionId}, Action={Action}, Success={Success}",
+    execution.Id,
+    decision.Action,
+    actionResult.Success);
 
             await _feedbackHandler.HandleAsync(
                 context,
@@ -218,6 +329,21 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
 
             if (actionResult.Success)
             {
+                var alreadyLocked = await _actionLocks.ExistsAsync(
+                       decision.Action,
+                       context.Event.CorrelationId,
+                       cancellationToken);
+
+                if (!alreadyLocked)
+                {
+                    var actionLock = new AgentActionLock(
+                        decision.Action,
+                        context.Event.CorrelationId,
+                        agentEvent.Id);
+
+                    await _actionLocks.AddAsync(actionLock, cancellationToken);
+                }
+
                 execution.MarkSucceeded(actionResult.ResultJson);
 
                 if (incident is not null)
@@ -228,22 +354,107 @@ public sealed class AgentOrchestrator : IAgentOrchestrator
             }
             else
             {
-                execution.MarkFailed(actionResult.ErrorMessage);
-
-                if (incident is not null)
+                if (execution.RetryCount < _retryOptions.MaxRetries)
                 {
-                    incident.Fail();
+                    var nextRetryAtUtc = RetryBackoffCalculator.CalculateNextRetryUtc(
+                        execution.RetryCount,
+                        _retryOptions);
+
+                    execution.ScheduleRetry(
+                        actionResult.ErrorMessage,
+                        nextRetryAtUtc);
+
+                    if (incident is not null)
+                    {
+                        incident.MarkActionPending();
+                    }
+                    _logger.LogWarning(
+    "Action failed. Retry scheduled. ExecutionId={ExecutionId}, RetryCount={RetryCount}, NextRetryAtUtc={NextRetryAtUtc}, Error={ErrorMessage}",
+    execution.Id,
+    execution.RetryCount,
+    execution.NextRetryAtUtc,
+    actionResult.ErrorMessage);
+                }
+                else
+                {
+                    execution.MarkFinalFailed(actionResult.ErrorMessage);
+
+                    if (incident is not null)
+                    {
+                        incident.Fail();
+                    }
+                    _logger.LogError(
+    "Action failed permanently. ExecutionId={ExecutionId}, RetryCount={RetryCount}, Error={ErrorMessage}",
+    execution.Id,
+    execution.RetryCount,
+    actionResult.ErrorMessage);
                 }
             }
 
             agentEvent.MarkProcessed();
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            stopwatch.Stop();
+
+            _logger.LogInformation(
+                "Agent event processing completed. ExecutionId={ExecutionId}, Status={Status}, DurationMs={DurationMs}",
+                execution.Id,
+                execution.Status,
+                stopwatch.ElapsedMilliseconds);
+
+
+            await NotifyExecutionCompletedAsync(
+                execution,
+                agentEvent,
+                incident,
+                cancellationToken);
         }
         catch (Exception ex)
         {
+            stopwatch.Stop();
+
             execution.MarkFailed(ex.Message);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            _logger.LogError(
+                ex,
+                "Agent event processing failed. ExecutionId={ExecutionId}, DurationMs={DurationMs}",
+                execution.Id,
+                stopwatch.ElapsedMilliseconds);
+
+            await _realtime.AgentExecutionCompletedAsync(
+                execution.Id,
+                agentEvent.Id,
+                execution.Status.ToString(),
+                execution.Action.ToString(),
+                agentEvent.CorrelationId,
+                cancellationToken);
+        }
+    }
+
+    private async Task NotifyExecutionCompletedAsync(
+        AgentExecution execution,
+        AgentEvent agentEvent,
+        Incident? incident,
+        CancellationToken cancellationToken)
+    {
+        await _realtime.AgentExecutionCompletedAsync(
+            execution.Id,
+            agentEvent.Id,
+            execution.Status.ToString(),
+            execution.Action.ToString(),
+            agentEvent.CorrelationId,
+            cancellationToken);
+
+        if (incident is not null)
+        {
+            await _realtime.IncidentChangedAsync(
+                incident.Id,
+                agentEvent.Id,
+                incident.Status.ToString(),
+                incident.Severity.ToString(),
+                cancellationToken);
         }
     }
 }

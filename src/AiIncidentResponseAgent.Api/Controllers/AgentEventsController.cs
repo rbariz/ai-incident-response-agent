@@ -1,14 +1,18 @@
 ﻿using AiIncidentResponseAgent.Application.Abstractions;
 using AiIncidentResponseAgent.Application.Abstractions.Repositories;
 using AiIncidentResponseAgent.Contracts.AgentEvents;
+using AiIncidentResponseAgent.Contracts.Common;
+using AiIncidentResponseAgent.Contracts.Ops;
 using AiIncidentResponseAgent.Domain.Events;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AiIncidentResponseAgent.Api.Controllers;
 
 
+[Authorize(Policy = "CanViewOps")]
 [ApiController]
 [Route("api/agent-events")]
 public sealed class AgentEventsController : ControllerBase
@@ -16,18 +20,22 @@ public sealed class AgentEventsController : ControllerBase
     private readonly IAgentEventRepository _events;
     private readonly IAgentOrchestrator _orchestrator;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IRealtimeNotifier _realtime;
 
     public AgentEventsController(
         IAgentEventRepository events,
         IAgentOrchestrator orchestrator,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IRealtimeNotifier realtime)
     {
         _events = events;
         _orchestrator = orchestrator;
         _unitOfWork = unitOfWork;
+        _realtime = realtime;
     }
 
     [HttpPost]
+    [Authorize(Policy = "CanManageTickets")]
     public async Task<ActionResult<AgentEventResponse>> Create(
         [FromBody] CreateAgentEventRequest request,
         CancellationToken cancellationToken)
@@ -56,6 +64,11 @@ public sealed class AgentEventsController : ControllerBase
         await _events.AddAsync(agentEvent, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+        await _realtime.AgentEventCreatedAsync(
+    agentEvent.Id,
+    agentEvent.CorrelationId,
+    cancellationToken);
+
         return CreatedAtAction(
             nameof(GetById),
             new { id = agentEvent.Id },
@@ -63,6 +76,7 @@ public sealed class AgentEventsController : ControllerBase
     }
 
     [HttpPost("{id:guid}/process")]
+    [Authorize(Policy = "CanManageApprovals")]
     public async Task<IActionResult> Process(
         Guid id,
         CancellationToken cancellationToken)
@@ -72,6 +86,7 @@ public sealed class AgentEventsController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [Authorize(Policy = "CanViewOps")]
     public async Task<ActionResult<AgentEventResponse>> GetById(
         Guid id,
         CancellationToken cancellationToken)
@@ -86,16 +101,28 @@ public sealed class AgentEventsController : ControllerBase
         return Ok(ToResponse(agentEvent));
     }
 
+    
+
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<AgentEventResponse>>> GetLatest(
-        [FromQuery] int take = 200,
-        CancellationToken cancellationToken = default)
+    [Authorize(Policy = "CanViewOps")]
+    public async Task<ActionResult<PagedResponse<AgentEventResponse>>> GetLatest(
+    [FromQuery] string? correlationId,
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 50,
+    CancellationToken cancellationToken = default)
     {
-        take = Math.Clamp(take, 1, 200);
+        var events = await _events.GetPagedAsync(
+            page,
+            pageSize,
+            cancellationToken);
 
-        var events = await _events.GetLatestAsync(take, cancellationToken);
-
-        return Ok(events.Select(ToResponse).ToList());
+        return Ok(new PagedResponse<AgentEventResponse>
+        {
+            Items = events.Items.Select(ToResponse).ToList(),
+            Page = events.Page,
+            PageSize = events.PageSize,
+            TotalCount = events.TotalCount
+        });
     }
 
     private static AgentEventResponse ToResponse(AgentEvent agentEvent)

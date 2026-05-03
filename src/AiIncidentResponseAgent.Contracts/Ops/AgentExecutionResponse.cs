@@ -34,5 +34,12 @@ public sealed class AgentExecutionResponse
     public string AnalysisSummaryFr { get; set; } = string.Empty;
     public string AnalysisSummaryEn { get; set; } = string.Empty;
 
+    public string ApprovalReason { get; set; } = string.Empty;
+    public DateTime? ApprovedAtUtc { get; set; }
+    public DateTime? RejectedAtUtc { get; set; }
+
+    public DateTime? NextRetryAtUtc { get; set; }
+    public DateTime? LastRetryAtUtc { get; set; }
+
 }
 

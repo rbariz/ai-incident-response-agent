@@ -78,6 +78,26 @@ public sealed class AgentExecutionConfiguration : IEntityTypeConfiguration<Agent
             .HasMaxLength(4000)
             .IsRequired();
 
+        builder.Property(x => x.ApprovalReason)
+    .HasColumnName("approval_reason")
+    .HasMaxLength(1000)
+    .IsRequired();
+
+        builder.Property(x => x.ApprovedAtUtc)
+            .HasColumnName("approved_at_utc");
+
+        builder.Property(x => x.RejectedAtUtc)
+            .HasColumnName("rejected_at_utc");
+
+        builder.Property(x => x.NextRetryAtUtc)
+    .HasColumnName("next_retry_at_utc");
+
+        builder.Property(x => x.LastRetryAtUtc)
+            .HasColumnName("last_retry_at_utc");
+
+        builder.HasIndex(x => x.NextRetryAtUtc);
+        builder.HasIndex(x => x.Status);
+
         builder.HasIndex(x => x.IdempotencyKey).IsUnique();
         builder.HasIndex(x => x.AgentEventId);
         builder.HasIndex(x => x.IncidentId);

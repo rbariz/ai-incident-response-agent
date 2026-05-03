@@ -13,5 +13,7 @@ public sealed class IncidentResponse
 
     public DateTime CreatedAtUtc { get; set; }
     public DateTime? ResolvedAtUtc { get; set; }
+
+    public bool IsArchived { get; set; }
 }
 

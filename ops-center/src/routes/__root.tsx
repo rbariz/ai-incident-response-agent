@@ -3,6 +3,9 @@ import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/r
 import appCss from "../styles.css?url";
 import { I18nProvider } from "@/i18n";
 import { AppShell } from "@/layout/app-shell";
+import { RealtimeProvider } from "@/realtime/hub";
+import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/auth/context";
 
 function NotFoundComponent() {
   return (
@@ -68,7 +71,12 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   return (
     <I18nProvider>
-      <AppShell />
+      <AuthProvider>
+        <RealtimeProvider>
+          <AppShell />
+          <Toaster position="bottom-right" theme="system" />
+        </RealtimeProvider>
+      </AuthProvider>
     </I18nProvider>
   );
 }

@@ -4,6 +4,7 @@ import { ENDPOINTS } from "@/config/api";
 import { Card, EmptyState, ErrorState, PageHeader } from "@/components/ui-bits";
 import { RefreshButton } from "@/components/refresh-button";
 import { useI18n } from "@/i18n";
+import { useHubEvent } from "@/realtime/hub";
 import { Activity, Cpu, AlertTriangle } from "lucide-react";
 import { formatDate } from "@/components/data-table";
 
@@ -47,6 +48,12 @@ function TimelinePage() {
   const { t } = useI18n();
   const { data, loading, error, refetch } = useApi<any>(ENDPOINTS.timeline);
   const items: TimelineItem[] = Array.isArray(data) ? data : (data?.items ?? data?.data ?? []);
+
+  useHubEvent("AgentEventCreated", () => refetch());
+  useHubEvent("AgentExecutionStarted", () => refetch());
+  useHubEvent("AgentExecutionCompleted", () => refetch());
+  useHubEvent("IncidentChanged", () => refetch());
+  useHubEvent("AgentExecutionApprovalChanged", () => refetch());
 
   return (
     <>

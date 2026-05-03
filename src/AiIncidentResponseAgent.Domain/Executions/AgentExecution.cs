@@ -45,6 +45,13 @@ namespace AiIncidentResponseAgent.Domain.Executions
         public string AnalysisSummaryFr { get; private set; } = string.Empty;
         public string AnalysisSummaryEn { get; private set; } = string.Empty;
 
+        public string ApprovalReason { get; private set; } = string.Empty;
+        public DateTime? ApprovedAtUtc { get; private set; }
+        public DateTime? RejectedAtUtc { get; private set; }
+
+        public DateTime? NextRetryAtUtc { get; private set; }
+        public DateTime? LastRetryAtUtc { get; private set; }
+
         public void AttachIncident(Guid incidentId)
         {
             IncidentId = incidentId;
@@ -100,6 +107,81 @@ namespace AiIncidentResponseAgent.Domain.Executions
         public void IncrementRetry()
         {
             RetryCount++;
+        }
+
+        public void MarkPendingApproval(string reason)
+        {
+            Status = AgentExecutionStatus.PendingApproval;
+            ApprovalReason = reason;
+            CompletedAtUtc = DateTime.UtcNow;
+        }
+
+        public void Approve(string reason)
+        {
+            if (Status != AgentExecutionStatus.PendingApproval)
+            {
+                throw new InvalidOperationException("Only pending approval executions can be approved.");
+            }
+
+            Status = AgentExecutionStatus.Approved;
+            ApprovalReason = reason;
+            ApprovedAtUtc = DateTime.UtcNow;
+        }
+
+        public void Reject(string reason)
+        {
+            if (Status != AgentExecutionStatus.PendingApproval)
+            {
+                throw new InvalidOperationException("Only pending approval executions can be rejected.");
+            }
+
+            Status = AgentExecutionStatus.Rejected;
+            ApprovalReason = reason;
+            RejectedAtUtc = DateTime.UtcNow;
+            CompletedAtUtc = DateTime.UtcNow;
+        }
+
+        public void MarkApprovedAndRunning(string reason)
+        {
+            if (Status != AgentExecutionStatus.PendingApproval)
+            {
+                throw new InvalidOperationException("Only pending approval executions can be approved.");
+            }
+
+            Status = AgentExecutionStatus.Running;
+            ApprovalReason = reason;
+            ApprovedAtUtc = DateTime.UtcNow;
+            StartedAtUtc ??= DateTime.UtcNow;
+        }
+
+
+        public void ScheduleRetry(string errorMessage, DateTime nextRetryAtUtc)
+        {
+            Status = AgentExecutionStatus.RetryScheduled;
+            ErrorMessage = errorMessage;
+            RetryCount++;
+            NextRetryAtUtc = nextRetryAtUtc;
+            CompletedAtUtc = DateTime.UtcNow;
+        }
+
+        public void StartRetry()
+        {
+            if (Status != AgentExecutionStatus.RetryScheduled)
+            {
+                throw new InvalidOperationException("Only retry scheduled executions can be retried.");
+            }
+
+            Status = AgentExecutionStatus.Running;
+            LastRetryAtUtc = DateTime.UtcNow;
+            NextRetryAtUtc = null;
+        }
+
+        public void MarkFinalFailed(string errorMessage)
+        {
+            Status = AgentExecutionStatus.Failed;
+            ErrorMessage = errorMessage;
+            CompletedAtUtc = DateTime.UtcNow;
+            NextRetryAtUtc = null;
         }
 
         private static string NormalizeLang(string? lang)

@@ -1,4 +1,6 @@
-﻿using AiIncidentResponseAgent.Domain.Incidents;
+﻿using AiIncidentResponseAgent.Contracts.Common;
+using AiIncidentResponseAgent.Domain.Executions;
+using AiIncidentResponseAgent.Domain.Incidents;
 
 namespace AiIncidentResponseAgent.Application.Abstractions.Repositories
 {
@@ -16,5 +18,11 @@ namespace AiIncidentResponseAgent.Application.Abstractions.Repositories
     string? status,
     int take,
     CancellationToken cancellationToken = default);
+
+        Task<PagedResponse<Incident>> GetPagedAsync(
+    int page,
+    int pageSize,
+    CancellationToken cancellationToken = default);
+
     }
 }

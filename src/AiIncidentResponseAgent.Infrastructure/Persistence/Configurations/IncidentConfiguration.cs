@@ -24,6 +24,12 @@ public sealed class IncidentConfiguration : IEntityTypeConfiguration<Incident>
         builder.Property(x => x.Description)
             .HasColumnName("description")
             .HasMaxLength(4000);
+        builder.Property(x => x.IsArchived)
+    .HasColumnName("is_archived")
+    .IsRequired();
+
+        
+
 
         builder.Property(x => x.Severity).HasColumnName("severity").HasConversion<int>().IsRequired();
         builder.Property(x => x.Status).HasColumnName("status").HasConversion<int>().IsRequired();
@@ -35,5 +41,6 @@ public sealed class IncidentConfiguration : IEntityTypeConfiguration<Incident>
         builder.HasIndex(x => x.Status);
         builder.HasIndex(x => x.Severity);
         builder.HasIndex(x => x.CreatedAtUtc);
+        builder.HasIndex(x => x.IsArchived);
     }
 }
