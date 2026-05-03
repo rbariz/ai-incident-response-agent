@@ -203,3 +203,6 @@ static async Task WriteHealthCheckResponse(
                 WriteIndented = true
             }));
 }
+
+
+public partial class Program { }
