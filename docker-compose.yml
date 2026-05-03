@@ -55,7 +55,7 @@ services:
       OllamaAnalyzer__Model: llama3
       Realtime__Enabled: "true"
       Realtime__ApiBaseUrl: http://api:8080
-      InternalApiKey__ApiKey: DEV_INTERNAL_REALTIME_KEY_123456
+      InternalApiKey__ApiKey: ${INTERNAL_API_KEY}
       AgentWorker__PollingIntervalSeconds: 5
       AgentWorker__BatchSize: 20
       AgentRetry__MaxRetries: 3
