@@ -9,4 +9,5 @@ public sealed class JwtOptions
     public string Audience { get; set; } = "OpsCenter";
     public string Secret { get; set; } = "CHANGE_ME_DEV_SECRET_AT_LEAST_32_CHARS";
     public int ExpirationMinutes { get; set; } = 120;
+    public int RefreshTokenExpirationDays { get; set; } = 7;
 }

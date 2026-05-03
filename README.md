@@ -331,6 +331,26 @@ Ollama runs on the host machine and is accessed from containers through:
 
 http://host.docker.internal:11434
 
+
+
+## Secrets Management
+
+For local development, sensitive values are stored using .NET User Secrets.
+
+API:
+
+dotnet user-secrets init --project src/AiIncidentResponseAgent.Api
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=ai_incident_response;Username=postgres;Password=postgres" --project src/AiIncidentResponseAgent.Api
+dotnet user-secrets set "Jwt:Secret" "DEV_SECRET_CHANGE_ME_123456789_32_CHARS_MIN" --project src/AiIncidentResponseAgent.Api
+dotnet user-secrets set "InternalApiKey:ApiKey" "DEV_INTERNAL_REALTIME_KEY_123456" --project src/AiIncidentResponseAgent.Api
+
+Worker:
+
+dotnet user-secrets init --project src/AiIncidentResponseAgent.Worker
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=ai_incident_response;Username=postgres;Password=postgres" --project src/AiIncidentResponseAgent.Worker
+dotnet user-secrets set "InternalApiKey:ApiKey" "DEV_INTERNAL_REALTIME_KEY_123456" --project src/AiIncidentResponseAgent.Worker
+
+
 👨 Author
 
 Rachid Bariz

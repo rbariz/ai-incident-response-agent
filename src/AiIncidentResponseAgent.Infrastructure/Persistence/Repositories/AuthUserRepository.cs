@@ -29,4 +29,9 @@ public sealed class AuthUserRepository : IAuthUserRepository
     {
         await _db.AuthUsers.AddAsync(user, cancellationToken);
     }
+
+    public Task<AuthUser?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return _db.AuthUsers.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
 }

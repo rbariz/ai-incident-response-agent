@@ -29,10 +29,10 @@ services:
       OllamaAnalyzer__Model: llama3
       Realtime__Enabled: "true"
       Realtime__ApiBaseUrl: http://api:8080
-      InternalApiKey__ApiKey: DEV_INTERNAL_REALTIME_KEY_123456
+      InternalApiKey__ApiKey:  ${INTERNAL_API_KEY}
       Jwt__Issuer: AiIncidentResponseAgent
       Jwt__Audience: OpsCenter
-      Jwt__Secret: DEV_SECRET_CHANGE_ME_123456789_32_CHARS_MIN
+      Jwt__Secret: ${JWT_SECRET}
       Jwt__ExpirationMinutes: 120
     ports:
       - "${API_HTTP_PORT}:8080"

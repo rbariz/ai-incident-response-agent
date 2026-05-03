@@ -37,6 +37,7 @@ namespace AiIncidentResponseAgent.Infrastructure.Persistence
         public DbSet<AuthUser> AuthUsers => Set<AuthUser>();
 
         public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+        public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

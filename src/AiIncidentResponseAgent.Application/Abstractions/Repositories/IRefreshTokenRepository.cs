@@ -2,16 +2,14 @@
 
 namespace AiIncidentResponseAgent.Application.Abstractions.Repositories
 {
-    public interface IAuthUserRepository
+    public interface IRefreshTokenRepository
     {
-        Task<AuthUser?> GetByUsernameAsync(
-            string username,
+        Task<RefreshToken?> GetByTokenHashAsync(
+            string tokenHash,
             CancellationToken cancellationToken = default);
 
         Task AddAsync(
-            AuthUser user,
+            RefreshToken refreshToken,
             CancellationToken cancellationToken = default);
-
-        Task<AuthUser?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     }
 }
