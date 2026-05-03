@@ -1,7 +1,7 @@
 ﻿using AiIncidentResponseAgent.Application.Models;
 using AiIncidentResponseAgent.Domain.Executions;
 
-namespace AiIncidentResponseAgent.Infrastructure.Actions;
+namespace AiIncidentResponseAgent.Application.Actions;
 
 public interface IAgentActionHandler
 {
