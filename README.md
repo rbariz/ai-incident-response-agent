@@ -312,6 +312,25 @@ Explaining decisions
 Remaining controlled and auditable
 Scaling to real operational workloads
 
+
+## Docker Compose Demo
+
+Run the full local demo with PostgreSQL, API, Worker and Ops Center:
+
+ollama run llama3
+docker compose --env-file .env.docker up --build
+
+Services:
+
+API: http://localhost:5027
+Swagger: http://localhost:5027/swagger
+Ops Center: http://localhost:5173
+Health: http://localhost:5027/health/ready
+
+Ollama runs on the host machine and is accessed from containers through:
+
+http://host.docker.internal:11434
+
 👨 Author
 
 Rachid Bariz
