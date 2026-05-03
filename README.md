@@ -350,6 +350,21 @@ dotnet user-secrets init --project src/AiIncidentResponseAgent.Worker
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=ai_incident_response;Username=postgres;Password=postgres" --project src/AiIncidentResponseAgent.Worker
 dotnet user-secrets set "InternalApiKey:ApiKey" "DEV_INTERNAL_REALTIME_KEY_123456" --project src/AiIncidentResponseAgent.Worker
 
+## 🚧 Ongoing Development
+
+The project is actively evolving toward a production-grade autonomous agent platform.
+
+The following improvements are planned or in progress:
+
+- 🔌 Real external BlockTicket API integration (replace or extend local ticket module)
+- 📡 OpenTelemetry integration (distributed tracing, observability stack)
+- 🐳 Docker Compose finalization and production-ready setup
+- 🧪 Extended automated tests (retry flows, approvals, RBAC, audit logs)
+- 📜 Audit Logs UI in Ops Center
+- 📸 Final screenshots and demo scenarios with clean dataset
+
+These enhancements will further strengthen reliability, observability and real-world readiness.
+
 
 👨 Author
 

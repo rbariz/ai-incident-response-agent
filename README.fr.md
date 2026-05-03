@@ -164,6 +164,22 @@ Contrôlée
 Explicable
 Scalable
 
+
+## 🚧 Éléments en cours de développement
+
+Le projet évolue activement vers une plateforme d’agent IA autonome prête pour la production.
+
+Les améliorations suivantes sont prévues ou en cours :
+
+- 🔌 Intégration d’une API externe réelle pour BlockTicket (remplacement ou extension du module local)
+- 📡 Intégration OpenTelemetry (traces distribuées, observabilité avancée)
+- 🐳 Finalisation du Docker Compose et configuration proche production
+- 🧪 Extension des tests automatisés (retries, approvals, RBAC, audit logs)
+- 📜 Interface Audit Logs dans l’Ops Center
+- 📸 Screenshots finaux et scénarios de démonstration avec dataset propre
+
+Ces améliorations renforceront la fiabilité, l’observabilité et la maturité du produit.
+
 👨 Author
 
 Rachid Bariz
