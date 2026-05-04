@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { apiGet, apiPost, clearSession, ENDPOINTS, STORAGE_KEYS, type Role } from "@/config/api";
+import { apiGet, apiPost, clearSession, ENDPOINTS, getRefreshToken, persistSession, type Role } from "@/config/api";
 
 export type AuthUser = {
   username: string;
@@ -9,6 +9,7 @@ export type AuthUser = {
 
 type LoginResponse = {
   accessToken: string;
+  refreshToken: string;
   username: string;
   role: Role;
   expiresAtUtc: string;
@@ -19,7 +20,7 @@ type AuthCtx = {
   ready: boolean;
   loading: boolean;
   login: (username: string, password: string) => Promise<AuthUser>;
-  logout: () => void;
+  logout: () => Promise<void>;
   hasRole: (...roles: Role[]) => boolean;
   canApprove: boolean;
   canManageTickets: boolean;
@@ -32,7 +33,7 @@ const Ctx = createContext<AuthCtx>({
   ready: false,
   loading: false,
   login: async () => { throw new Error("AuthProvider missing"); },
-  logout: () => {},
+  logout: async () => {},
   hasRole: () => false,
   canApprove: false,
   canManageTickets: false,
@@ -42,18 +43,14 @@ const Ctx = createContext<AuthCtx>({
 
 function readStored(): AuthUser | null {
   if (typeof window === "undefined") return null;
-  const token = localStorage.getItem(STORAGE_KEYS.token);
-  const username = localStorage.getItem(STORAGE_KEYS.username);
-  const role = localStorage.getItem(STORAGE_KEYS.role) as Role | null;
-  const expiresAtUtc = localStorage.getItem(STORAGE_KEYS.expiresAt) ?? undefined;
-  if (!token || !username || !role) return null;
-  if (expiresAtUtc) {
-    const t = new Date(expiresAtUtc).getTime();
-    if (!isNaN(t) && t < Date.now()) {
-      clearSession();
-      return null;
-    }
-  }
+  const username = localStorage.getItem("ops.username");
+  const role = localStorage.getItem("ops.role") as Role | null;
+  const expiresAtUtc = localStorage.getItem("ops.expiresAtUtc") ?? undefined;
+  const access = localStorage.getItem("ops.accessToken");
+  const refresh = localStorage.getItem("ops.refreshToken");
+  if (!username || !role) return null;
+  // Even if access is expired, keep session if refresh token still present — refresh will run.
+  if (!access && !refresh) return null;
   return { username, role, expiresAtUtc };
 }
 
@@ -69,17 +66,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     setUser(stored);
-    // Validate token via /me, but don't block UI
     apiGet<{ username: string; role: Role }>(ENDPOINTS.authMe)
       .then((me) => {
         if (me?.username && me?.role) {
           setUser((u) => ({ ...(u ?? { username: me.username, role: me.role }), username: me.username, role: me.role }));
-          localStorage.setItem(STORAGE_KEYS.username, me.username);
-          localStorage.setItem(STORAGE_KEYS.role, me.role);
+          localStorage.setItem("ops.username", me.username);
+          localStorage.setItem("ops.role", me.role);
         }
       })
       .catch(() => {
-        // 401 already handled globally
+        // 401 is handled globally — will redirect to login
       })
       .finally(() => setReady(true));
   }, []);
@@ -88,10 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const res = await apiPost<LoginResponse>(ENDPOINTS.authLogin, { username, password }, { skipAuth: true });
-      localStorage.setItem(STORAGE_KEYS.token, res.accessToken);
-      localStorage.setItem(STORAGE_KEYS.username, res.username);
-      localStorage.setItem(STORAGE_KEYS.role, res.role);
-      localStorage.setItem(STORAGE_KEYS.expiresAt, res.expiresAtUtc);
+      persistSession(res);
       const u: AuthUser = { username: res.username, role: res.role, expiresAtUtc: res.expiresAtUtc };
       setUser(u);
       return u;
@@ -100,10 +93,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const logout = useCallback(() => {
-    clearSession();
-    setUser(null);
-    if (typeof window !== "undefined") window.location.replace("/login");
+  const logout = useCallback(async () => {
+    const refreshToken = getRefreshToken();
+    try {
+      if (refreshToken) {
+        await apiPost(ENDPOINTS.authLogout, { refreshToken }, { skipRefresh: true }).catch(() => {});
+      }
+    } finally {
+      clearSession();
+      setUser(null);
+      if (typeof window !== "undefined") window.location.replace("/login");
+    }
   }, []);
 
   const hasRole = useCallback((...roles: Role[]) => !!user && roles.includes(user.role), [user]);

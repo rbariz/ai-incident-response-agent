@@ -11,7 +11,7 @@ import { StatusBadge, toneForSeverity, toneForStatus } from "@/components/status
 import { Pagination } from "@/components/pagination";
 import { DetailDrawer, DetailField, DetailSection } from "@/components/detail-drawer";
 import { useI18n } from "@/i18n";
-import { useHubEvent, rtToast } from "@/realtime/hub";
+import { useHubEvent, useHubReconnected, rtToast } from "@/realtime/hub";
 import { useAuth } from "@/auth/context";
 
 export const Route = createFileRoute("/incidents")({
@@ -38,6 +38,7 @@ function IncidentsPage() {
   useHubEvent("IncidentChanged", () => { rtToast(t("rt.incident.changed")); paged.refetch(); });
   useHubEvent("AgentExecutionCompleted", () => paged.refetch());
   useHubEvent("AgentExecutionApprovalChanged", () => paged.refetch());
+  useHubReconnected(() => paged.refetch());
 
   const isResolved = (s?: string | null) => (s ?? "").toLowerCase() === "resolved";
 

@@ -3,7 +3,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Card, PageHeader } from "@/components/ui-bits";
 import { RefreshButton } from "@/components/refresh-button";
 import { useI18n } from "@/i18n";
-import { useHubEvent } from "@/realtime/hub";
+import { useHubEvent, useHubReconnected } from "@/realtime/hub";
 import { Activity, Cpu, AlertTriangle, Clock, CheckCircle2, XCircle, Ticket, ShieldAlert, TrendingUp, Timer, RotateCcw } from "lucide-react";
 import { useApi } from "@/hooks/use-api";
 import { ENDPOINTS } from "@/config/api";
@@ -117,6 +117,7 @@ function Dashboard() {
   useHubEvent("AgentExecutionCompleted", refreshAll);
   useHubEvent("AgentExecutionApprovalChanged", refreshAll);
   useHubEvent("IncidentChanged", refreshAll);
+  useHubReconnected(refreshAll);
 
   const o = overview.data ?? {};
   const tk = technical.data ?? {};

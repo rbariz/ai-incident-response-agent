@@ -1,6 +1,6 @@
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { LayoutDashboard, Activity, Cpu, AlertTriangle, GitBranch, ShieldCheck, Ticket, LogOut, User } from "lucide-react";
+import { LayoutDashboard, Activity, Cpu, AlertTriangle, GitBranch, ShieldCheck, Ticket, LogOut, User, FileSearch } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { ConnectionStatus } from "@/components/connection-status";
@@ -14,6 +14,7 @@ const NAV = [
   { to: "/incidents", labelKey: "nav.incidents", icon: AlertTriangle, exact: false },
   { to: "/tickets", labelKey: "nav.tickets", icon: Ticket, exact: false },
   { to: "/timeline", labelKey: "nav.timeline", icon: GitBranch, exact: false },
+  { to: "/audit-logs", labelKey: "nav.auditLogs", icon: FileSearch, exact: false },
 ] as const;
 
 const PAGE_TITLE: Record<string, string> = {
@@ -23,6 +24,7 @@ const PAGE_TITLE: Record<string, string> = {
   "/incidents": "page.incidents.title",
   "/tickets": "page.tickets.title",
   "/timeline": "page.timeline.title",
+  "/audit-logs": "page.auditLogs.title",
 };
 
 export function AppShell() {
@@ -103,7 +105,7 @@ export function AppShell() {
               <div className="mt-0.5"><StatusBadge tone={roleTone as any} dot={false} className="px-1.5 py-0 text-[10px]">{roleLabel}</StatusBadge></div>
             </div>
             <button
-              onClick={logout}
+              onClick={() => { void logout(); }}
               title={t("auth.logout")}
               className="rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >

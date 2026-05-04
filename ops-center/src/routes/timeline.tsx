@@ -4,7 +4,7 @@ import { ENDPOINTS } from "@/config/api";
 import { Card, EmptyState, ErrorState, PageHeader } from "@/components/ui-bits";
 import { RefreshButton } from "@/components/refresh-button";
 import { useI18n } from "@/i18n";
-import { useHubEvent } from "@/realtime/hub";
+import { useHubEvent, useHubReconnected } from "@/realtime/hub";
 import { Activity, Cpu, AlertTriangle } from "lucide-react";
 import { formatDate } from "@/components/data-table";
 
@@ -54,6 +54,7 @@ function TimelinePage() {
   useHubEvent("AgentExecutionCompleted", () => refetch());
   useHubEvent("IncidentChanged", () => refetch());
   useHubEvent("AgentExecutionApprovalChanged", () => refetch());
+  useHubReconnected(() => refetch());
 
   return (
     <>

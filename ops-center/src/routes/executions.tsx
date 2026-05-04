@@ -13,7 +13,7 @@ import { DetailDrawer, DetailField, DetailSection, CodeBlock } from "@/component
 import { ExecutionTimeline } from "@/components/execution-timeline";
 import { ApprovalModal, type ApprovalMode } from "@/components/approval-modal";
 import { useI18n } from "@/i18n";
-import { useHubEvent, rtToast } from "@/realtime/hub";
+import { useHubEvent, useHubReconnected, rtToast } from "@/realtime/hub";
 import { useAuth } from "@/auth/context";
 
 function AiSummary({ execution }: { execution: any }) {
@@ -81,6 +81,7 @@ function ExecutionsPage() {
     rtToast(t("rt.execution.approvalChanged"), desc || undefined);
     paged.refetch();
   });
+  useHubReconnected(() => paged.refetch());
 
   const isPending = (s?: string | null) => (s ?? "").toLowerCase().replace(/[_-]/g, "") === "pendingapproval";
   const isRetry = (s?: string | null) => (s ?? "").toLowerCase().replace(/[_-]/g, "") === "retryscheduled";

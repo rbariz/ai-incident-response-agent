@@ -11,7 +11,7 @@ import { StatusBadge, toneForStatus } from "@/components/status-badge";
 import { Pagination } from "@/components/pagination";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/auth/context";
-import { useHubEvent } from "@/realtime/hub";
+import { useHubEvent, useHubReconnected } from "@/realtime/hub";
 
 export const Route = createFileRoute("/tickets")({
   component: TicketsPage,
@@ -27,6 +27,7 @@ function TicketsPage() {
   useHubEvent("AgentExecutionCompleted", (p: any) => {
     if (String(p?.action ?? "").toLowerCase() === "blockticket") paged.refetch();
   });
+  useHubReconnected(() => paged.refetch());
 
   return (
     <>

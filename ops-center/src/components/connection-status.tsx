@@ -10,6 +10,7 @@ export function ConnectionStatus() {
     connected: { dot: "bg-success", text: "text-foreground", pulse: false, label: t("rt.connected") },
     reconnecting: { dot: "bg-warning", text: "text-foreground", pulse: true, label: t("rt.reconnecting") },
     disconnected: { dot: "bg-destructive", text: "text-muted-foreground", pulse: false, label: t("rt.disconnected") },
+    unauthorized: { dot: "bg-destructive", text: "text-muted-foreground", pulse: false, label: t("rt.unauthorized") },
   } as const;
 
   const s = map[status];

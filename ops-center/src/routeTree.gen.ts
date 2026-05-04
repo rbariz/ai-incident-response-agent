@@ -15,6 +15,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as IncidentsRouteImport } from './routes/incidents'
 import { Route as ExecutionsRouteImport } from './routes/executions'
 import { Route as EventsRouteImport } from './routes/events'
+import { Route as AuditLogsRouteImport } from './routes/audit-logs'
 import { Route as IndexRouteImport } from './routes/index'
 
 const TimelineRoute = TimelineRouteImport.update({
@@ -47,6 +48,11 @@ const EventsRoute = EventsRouteImport.update({
   path: '/events',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuditLogsRoute = AuditLogsRouteImport.update({
+  id: '/audit-logs',
+  path: '/audit-logs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -55,6 +61,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/audit-logs': typeof AuditLogsRoute
   '/events': typeof EventsRoute
   '/executions': typeof ExecutionsRoute
   '/incidents': typeof IncidentsRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/audit-logs': typeof AuditLogsRoute
   '/events': typeof EventsRoute
   '/executions': typeof ExecutionsRoute
   '/incidents': typeof IncidentsRoute
@@ -74,6 +82,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/audit-logs': typeof AuditLogsRoute
   '/events': typeof EventsRoute
   '/executions': typeof ExecutionsRoute
   '/incidents': typeof IncidentsRoute
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/audit-logs'
     | '/events'
     | '/executions'
     | '/incidents'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/audit-logs'
     | '/events'
     | '/executions'
     | '/incidents'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/audit-logs'
     | '/events'
     | '/executions'
     | '/incidents'
@@ -113,6 +125,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuditLogsRoute: typeof AuditLogsRoute
   EventsRoute: typeof EventsRoute
   ExecutionsRoute: typeof ExecutionsRoute
   IncidentsRoute: typeof IncidentsRoute
@@ -165,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/audit-logs': {
+      id: '/audit-logs'
+      path: '/audit-logs'
+      fullPath: '/audit-logs'
+      preLoaderRoute: typeof AuditLogsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -177,6 +197,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuditLogsRoute: AuditLogsRoute,
   EventsRoute: EventsRoute,
   ExecutionsRoute: ExecutionsRoute,
   IncidentsRoute: IncidentsRoute,
