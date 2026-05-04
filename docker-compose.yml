@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "5438:5432"
     volumes:
       - ai_agent_postgres_data:/var/lib/postgresql/data
     networks:
@@ -29,7 +29,7 @@ services:
       OllamaAnalyzer__Model: llama3
       Realtime__Enabled: "true"
       Realtime__ApiBaseUrl: http://api:8080
-      InternalApiKey__ApiKey:  ${INTERNAL_API_KEY}
+      InternalApiKey__ApiKey: ${INTERNAL_API_KEY}
       Jwt__Issuer: AiIncidentResponseAgent
       Jwt__Audience: OpsCenter
       Jwt__Secret: ${JWT_SECRET}
@@ -74,9 +74,10 @@ services:
     depends_on:
       - api
     ports:
-      - "${OPS_CENTER_PORT}:80"
+      - "${OPS_CENTER_PORT}:3000"
     networks:
       - ai-agent-net
+
 
 volumes:
   ai_agent_postgres_data:
