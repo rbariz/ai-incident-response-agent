@@ -264,12 +264,14 @@ Structured logging
 Ops Center UI
 
 🚧 Current Limitations / Future Work
-Real external BlockTicket API integration is not implemented yet; current implementation uses a local Ticketing module
-Production observability can be improved with OpenTelemetry, traces and external log sinks
-Detailed audit trail for all user/operator actions is not implemented yet
-Automated tests are still limited / to be completed
-Docker Compose demo packaging is not completed yet
-Security hardening can be improved with refresh tokens, SignalR JWT auth, stronger internal API protection and secret management
+
+The platform is already functional and demonstrates a production-grade architecture.  
+The following improvements are planned or in progress:
+
+- 🔌 Real external BlockTicket API integration (currently using a local Ticketing module)
+- 📡 OpenTelemetry integration for distributed tracing and advanced observability
+- 🐳 Docker Compose packaging can be further optimized for production environments
+- 🧪 Automated test coverage can be extended (retry flows, approvals, RBAC, audit logs)
 
 📸 Screenshots
 🧭 Dashboard
@@ -286,11 +288,14 @@ Track agent executions, statuses, decisions, actions, AI provider and confidence
 
 Detailed view of a single execution with AI summary, result JSON, retry information and timestamps.
 ![Execution Details](docs/screenshots/execution-details.png)
+![Execution Details -Pending Approval](docs/screenshots/pending-approval.png)
+![Execution Details - Retry Scheduled](docs/screenshots/retry-scheduled.png)
 
 🚨 Incidents
 
-Monitor incidents, severity, status and lifecycle.
+Monitor incidents, severity, status and lifecycle. Detailed view of a single
 ![Incidents](docs/screenshots/incidents.png)
+![IncidentDetails](docs/screenshots/incident-details.png)
 
 🎟️ Tickets
 
@@ -301,6 +306,13 @@ Track local tickets and BlockTicket execution results.
 
 Chronological view of events, executions and incidents.
 ![Timeline](docs/screenshots/timeline.png)
+
+
+🔍 Viewer Reader
+No Approve/Reject buttons
+No Create Ticket button
+Audit logs visible read-only
+![Reader Read only](docs/screenshots/viewer-readonly.png)
 
 🎯 Goal
 

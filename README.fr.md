@@ -147,13 +147,15 @@ Metrics
 Logs structurés
 Health checks
 
-🚧 Limites actuelles
-Pas encore d’intégration externe réelle (BlockTicket)
-Observabilité avancée à compléter (OpenTelemetry)
-Audit trail détaillé manquant
-Tests incomplets
-Docker non finalisé
-Hardening sécurité à compléter
+🚧 Limitations actuelles / Travaux en cours
+
+La plateforme est déjà fonctionnelle et démontre une architecture proche production.  
+Les améliorations suivantes sont prévues ou en cours :
+
+- 🔌 Intégration d’une API externe réelle pour BlockTicket (actuellement module local)
+- 📡 Intégration OpenTelemetry pour le tracing distribué et l’observabilité avancée
+- 🐳 Optimisation du packaging Docker Compose pour des environnements production
+- 🧪 Extension de la couverture de tests automatisés (retries, approvals, RBAC, audit logs)
 
 🎯 Objectif
 
